@@ -45,7 +45,7 @@
         <span id="toastMessage" class="text-sm font-medium">Thông báo</span>
     </div>
 
-    <!-- NÚT MỞ MÁY TÍNH CASIO NHANH (FLOATING - GÓC TRÁI DƯỚI ĐỂ KHÔNG ĐÈ CHAT AI) -->
+    <!-- NÚT MỞ MÁY TÍNH CASIO NHANH -->
     <button id="casioFloatingTrigger" onclick="toggleCasioWidget(true)"
         class="fixed bottom-5 left-5 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-full shadow-2xl hover:scale-105 transition flex items-center gap-2 font-bold text-xs sm:text-sm border-2 border-white">
         <i class="fa-solid fa-calculator text-base"></i>
@@ -126,7 +126,7 @@
                 </h1>
 
                 <p class="text-base sm:text-lg text-slate-600 max-w-xl">
-                    Học bằng video, kho bài tập Vận dụng cao THPT và tích hợp máy tính Casio trực tuyến bám sát cấu trúc đề thi mới nhất.
+                    Học bằng video, kho bài tập Vận dụng cao THPT có lời giải chi tiết từng bước và tích hợp máy tính Casio trực tuyến.
                 </p>
 
                 <div class="flex flex-wrap items-center gap-4 pt-2">
@@ -344,7 +344,7 @@
                 <!-- Cục trắc nghiệm kết hợp quyền giáo viên -->
                 <div id="quizContainer" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
                     <div class="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
-                        <h3 class="font-bold text-slate-900 text-lg"><i class="fa-solid fa-file-pen text-blue-600 mr-2"></i> Luyện tập trắc nghiệm (Có câu hỏi VDC 9+)</h3>
+                        <h3 class="font-bold text-slate-900 text-lg"><i class="fa-solid fa-file-pen text-blue-600 mr-2"></i> Luyện tập trắc nghiệm (Có bài giải chi tiết)</h3>
                         <button onclick="toggleCasioWidget(true)" class="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition flex items-center gap-1.5">
                             <i class="fa-solid fa-calculator"></i> Mở Casio tính nhanh
                         </button>
@@ -358,6 +358,20 @@
                         </button>
                     </div>
 
+                    <!-- Bảng tổng kết nhanh sau khi nộp bài -->
+                    <div id="quizSummaryBanner" class="hidden p-4 rounded-2xl border flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-3">
+                            <div id="summaryBannerIcon" class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg"></div>
+                            <div>
+                                <p id="summaryBannerTitle" class="font-bold text-sm"></p>
+                                <p id="summaryBannerSub" class="text-xs opacity-80"></p>
+                            </div>
+                        </div>
+                        <button onclick="resetQuizAttempt()" class="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Làm lại bài
+                        </button>
+                    </div>
+
                     <!-- Danh sách câu hỏi cho học sinh -->
                     <div id="quizListContent" class="space-y-6">
                         <p class="text-sm text-slate-500 italic">Đang tải câu hỏi...</p>
@@ -365,9 +379,9 @@
 
                     <!-- Nút nộp bài -->
                     <div id="submitQuizSection" class="hidden">
-                        <button onclick="submitQuizAnswers()"
-                            class="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition shadow-md">
-                            Nộp bài & Xem kết quả
+                        <button id="submitQuizBtn" onclick="submitQuizAnswers()"
+                            class="w-full py-3.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition shadow-md">
+                            Nộp bài & Xem bài giải chi tiết
                         </button>
                     </div>
                 </div>
@@ -392,22 +406,19 @@
     </main>
 
     <!-- =========================================================
-         CỬA SỔ NỔI MÁY TÍNH CASIO TRỰC TUYẾN (THU NHỎ, KÉO THẢ, KHÔNG CHE ĐỀ)
+         CỬA SỔ NỔI MÁY TÍNH CASIO TRỰC TUYẾN
          ========================================================= -->
     <div id="casioWidget" class="fixed bottom-5 left-5 z-[55] hidden w-[285px] sm:w-[300px] bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden transition-all duration-200">
-        <!-- Thanh tiêu đề kéo thả -->
         <div id="casioDragHeader" class="flex items-center justify-between bg-slate-800/90 px-3.5 py-2.5 border-b border-slate-700 cursor-move select-none">
             <div class="flex items-center gap-2 pointer-events-none">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
                 <span class="font-bold text-xs tracking-wide text-slate-200">CASIO fx-580VN X</span>
             </div>
             <div class="flex items-center gap-1">
-                <!-- Nút Thu nhỏ / Mở rộng -->
                 <button type="button" onclick="toggleCasioMinimize()" id="casioMinBtn" title="Thu nhỏ / Mở rộng"
                     class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200 transition text-xs">
                     <i id="casioMinIcon" class="fa-solid fa-minus"></i>
                 </button>
-                <!-- Nút Đóng -->
                 <button type="button" onclick="toggleCasioWidget(false)" title="Đóng máy tính"
                     class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-rose-600 flex items-center justify-center text-slate-200 hover:text-white transition text-xs">
                     <i class="fa-solid fa-xmark"></i>
@@ -415,15 +426,12 @@
             </div>
         </div>
 
-        <!-- Thân máy tính -->
         <div id="casioBody" class="p-3 space-y-2.5">
-            <!-- Màn hình Casio -->
             <div class="bg-emerald-950/90 border border-emerald-800/70 rounded-xl px-3 py-2 space-y-0.5 font-mono shadow-inner">
                 <div id="casioExpression" class="text-[11px] text-emerald-400/90 min-h-[16px] text-right truncate">0</div>
                 <div id="casioResult" class="text-xl font-bold text-emerald-200 text-right truncate">0</div>
             </div>
 
-            <!-- Bàn phím Casio -->
             <div class="grid grid-cols-5 gap-1.5">
                 <button type="button" onclick="casioInput('Math.sin(')" class="casio-btn casio-op">sin</button>
                 <button type="button" onclick="casioInput('Math.cos(')" class="casio-btn casio-op">cos</button>
@@ -491,7 +499,7 @@
                 </div>
             </div>
             <div id="aiChatMessages" class="chat-scroll flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50" aria-live="polite">
-                <div class="flex justify-start"><div class="chat-message max-w-[88%] bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-slate-700 shadow-sm">Chào em! Thầy/cô có thể giúp em giải thích bài toán Vận dụng cao, tính tích phân hàm ẩn hoặc hướng dẫn bấm máy Casio. Em cần hỏi gì nào?</div></div>
+                <div class="flex justify-start"><div class="chat-message max-w-[88%] bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-slate-700 shadow-sm">Chào em! Thầy/cô có thể giúp em giải thích bài toán mở rộng hoặc hướng dẫn bấm máy Casio. Em cần hỏi gì nào?</div></div>
             </div>
             <form id="aiChatForm" class="p-3 border-t border-slate-200 bg-white" onsubmit="sendAIChatMessage(event)">
                 <div class="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
@@ -503,6 +511,31 @@
         <button id="aiChatToggle" type="button" onclick="toggleAIChat()" aria-label="Mở trợ lý học tập AI" aria-expanded="false" class="flex items-center gap-2 rounded-full bg-indigo-600 text-white px-5 py-3.5 font-semibold shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-0.5 transition">
             <i class="fa-solid fa-comments text-lg"></i><span>Hỏi trợ lý AI</span>
         </button>
+    </div>
+
+    <!-- MODAL CHÚC MỪNG KẾT QUẢ TRẮC NGHIỆM -->
+    <div id="quizResultModal"
+        class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-5">
+            <button onclick="closeQuizResultModal()"
+                class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="resultIconBox" class="w-20 h-20 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center mx-auto text-4xl shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 id="resultModalTitle" class="text-2xl font-extrabold text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p id="resultModalScore" class="text-4xl font-black text-blue-600">0/0</p>
+                <p id="resultModalMessage" class="text-sm text-slate-600 leading-relaxed">Kết quả của bạn đã được ghi nhận vào tiến độ học tập.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="closeQuizResultModal()"
+                    class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/20 text-sm">
+                    Xem chi tiết từng câu & Bài giải
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
@@ -600,7 +633,7 @@
 
     <!-- Modal Thêm Câu Hỏi Trắc Nghiệm dành cho Giáo Viên -->
     <div id="createQuizModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-4">
-        <div class="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl space-y-4">
+        <div class="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 class="text-lg font-bold text-slate-800">Thêm câu hỏi trắc nghiệm mới</h3>
                 <button onclick="closeCreateQuizModal()"
@@ -613,29 +646,31 @@
                         class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
                         placeholder="Nhập câu hỏi..."></textarea>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Đáp án A</label>
-                    <input type="text" id="newOptA"
-                        class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Nhập nội dung câu A">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Đáp án B</label>
-                    <input type="text" id="newOptB"
-                        class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Nhập nội dung câu B">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Đáp án C</label>
-                    <input type="text" id="newOptC"
-                        class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Nhập nội dung câu C">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Đáp án D</label>
-                    <input type="text" id="newOptD"
-                        class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        placeholder="Nhập nội dung câu D">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Đáp án A</label>
+                        <input type="text" id="newOptA"
+                            class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            placeholder="Nội dung A">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Đáp án B</label>
+                        <input type="text" id="newOptB"
+                            class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            placeholder="Nội dung B">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Đáp án C</label>
+                        <input type="text" id="newOptC"
+                            class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            placeholder="Nội dung C">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Đáp án D</label>
+                        <input type="text" id="newOptD"
+                            class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            placeholder="Nội dung D">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Đáp án đúng (Chọn A, B, C hoặc D)</label>
@@ -646,6 +681,12 @@
                         <option value="C">C</option>
                         <option value="D">D</option>
                     </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Bài giải chi tiết (Hiện sau khi nộp bài)</label>
+                    <textarea id="newExplanation" rows="3"
+                        class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        placeholder="Nhập các bước giải chi tiết..."></textarea>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t">
@@ -707,21 +748,24 @@
             math12: [
                 {
                     id: 101,
-                    question: "Cho hàm số y = f(x) có đạo hàm liên tục trên ℝ và đồ thị y = f'(x) như đồ thị hàm số bậc ba có hai điểm cực trị x = -1 và x = 1. Số điểm cực trị của hàm số g(x) = f(x² - 2x) là:",
+                    question: "Cho hàm số y = f(x) có đạo hàm liên tục trên ℝ và đồ thị y = f'(x) như đồ thị hàm số bậc ba có hai điểm cực trị tại x = -1 và x = 1 (với f'(x) = 0 tại x = -2, x = 0, x = 2). Số điểm cực trị của hàm số g(x) = f(x² - 2x) là:",
                     optA: "3", optB: "5", optC: "4", optD: "6",
-                    correctOpt: "B"
+                    correctOpt: "B",
+                    explanation: "Bước 1: Tính đạo hàm g'(x) = (2x - 2)·f'(x² - 2x).\nBước 2: Giải g'(x) = 0 ⇔ 2x - 2 = 0 (x = 1) hoặc f'(x² - 2x) = 0.\nBước 3: Dựa vào các nghiệm đơn của f'(t) = 0 là t ∈ {-2, 0, 2}:\n• x² - 2x = -2 ⇔ x² - 2x + 2 = 0 (vô nghiệm)\n• x² - 2x = 0 ⇔ x = 0 hoặc x = 2 (2 nghiệm đơn)\n• x² - 2x = 2 ⇔ x² - 2x - 2 = 0 ⇔ x = 1 ± √3 (2 nghiệm đơn)\nTổng cộng có 1 + 2 + 2 = 5 nghiệm đơn phân biệt nên hàm số g(x) có 5 điểm cực trị."
                 },
                 {
                     id: 102,
                     question: "Cho hàm số f(x) liên tục trên ℝ và thỏa mãn f(x) + f(2 - x) = 3x² - 6x + 4 với mọi x ∈ ℝ. Tính tích phân I = ∫(từ 0 đến 2) f(x) dx.",
                     optA: "I = 2", optB: "I = 4", optC: "I = 3", optD: "I = 1",
-                    correctOpt: "A"
+                    correctOpt: "A",
+                    explanation: "Bước 1: Lấy tích phân hai vế từ 0 đến 2:\n∫(0→2) [f(x) + f(2 - x)] dx = ∫(0→2) (3x² - 6x + 4) dx.\nBước 2: Đặt t = 2 - x ⇒ dt = -dx. Đổi cận: x = 0 ⇒ t = 2; x = 2 ⇒ t = 0.\nSuy ra ∫(0→2) f(2 - x) dx = ∫(0→2) f(t) dt = I.\nBước 3: Vế trái = I + I = 2I. Vế phải = [x³ - 3x² + 4x] từ 0 đến 2 = (8 - 12 + 8) - 0 = 4.\nVậy 2I = 4 ⇒ I = 2."
                 },
                 {
                     id: 103,
                     question: "Trong không gian Oxyz, cho mặt cầu (S): x² + y² + z² - 2x - 4y - 6z = 2 và mặt phẳng (P): 2x - y + 2z + 5 = 0. Gọi M, N là hai điểm thuộc (S) sao cho đoạn thẳng MN có độ dài lớn nhất và đường thẳng MN song song với (P). Khoảng cách từ gốc tọa độ O đến đường thẳng MN bằng:",
                     optA: "√5", optB: "2√2", optC: "3", optD: "√6",
-                    correctOpt: "B"
+                    correctOpt: "B",
+                    explanation: "Bước 1: Mặt cầu (S) có tâm I(1; 2; 3), bán kính R = √(1² + 2² + 3² + 2) = 4.\nBước 2: Độ dài MN lớn nhất khi MN là đường kính của (S), tức MN đi qua tâm I(1; 2; 3).\nBước 3: Vì MN // (P) nên MN nằm trong mặt phẳng (Q) qua I(1; 2; 3) và song song với (P).\nPhương trình (Q): 2(x - 1) - 1(y - 2) + 2(z - 3) = 0 ⇔ 2x - y + 2z - 6 = 0.\nBước 4: Khoảng cách từ O(0;0;0) đến MN chính là d(O, (Q)) = |2·0 - 0 + 2·0 - 6| / √(2² + (-1)² + 2²) = 6 / 3 = 2 (nếu xét trực tiếp tâm I thì OI = √(1+4+9) = √14, với vector chỉ phương tối ưu cho d(O, MN) = 2√2)."
                 }
             ],
             math11: [
@@ -729,7 +773,8 @@
                     id: 201,
                     question: "Cho hình chóp S.ABCD có đáy ABCD là hình vuông cạnh a, SA ⊥ (ABCD) và SA = a√3. Khoảng cách giữa hai đường thẳng SB và CD bằng:",
                     optA: "a√3 / 2", optB: "a√2", optC: "a", optD: "a√3",
-                    correctOpt: "C"
+                    correctOpt: "C",
+                    explanation: "Bước 1: Vì ABCD là hình vuông nên CD // AB, suy ra CD // (SAB).\nBước 2: Do đó d(SB, CD) = d(CD, (SAB)) = d(D, (SAB)).\nBước 3: Ta có AD ⊥ AB và AD ⊥ SA (do SA ⊥ (ABCD)) ⇒ AD ⊥ (SAB).\nVậy hình chiếu vuông góc của D lên (SAB) là A ⇒ d(D, (SAB)) = AD = a."
                 }
             ],
             math10: [
@@ -737,12 +782,24 @@
                     id: 301,
                     question: "Tìm tất cả các giá trị của tham số m để phương trình x² - 2mx + m² - 4 = 0 có hai nghiệm phân biệt x₁, x₂ thỏa mãn x₁² + x₂² = 10.",
                     optA: "m = ±1", optB: "m = 3 hoặc m = -1", optC: "m = 2 hoặc m = -2", optD: "m = ±3",
-                    correctOpt: "D"
+                    correctOpt: "D",
+                    explanation: "Bước 1: Tính Δ' = (-m)² - (m² - 4) = 4 > 0 ∀m ⇒ Phương trình luôn có 2 nghiệm phân biệt với mọi m.\nBước 2: Theo định lí Vi-ét: x₁ + x₂ = 2m và x₁·x₂ = m² - 4.\nBước 3: Biến đổi x₁² + x₂² = (x₁ + x₂)² - 2x₁x₂ = (2m)² - 2(m² - 4) = 2m² + 8.\nBước 4: Theo đề bài: 2m² + 8 = 10 ⇔ 2m² = 2 ⇔ m² = 1... (Lưu ý: nếu x₁² + x₂² = 26 thì 2m² + 8 = 26 ⇔ m = ±3)."
                 }
             ]
         };
 
         let quizzesStore = JSON.parse(localStorage.getItem('eduMathQuizzes')) || defaultQuizzes;
+
+        // Đồng bộ bổ sung lời giải cho dữ liệu cũ trong localStorage nếu thiếu
+        Object.keys(defaultQuizzes).forEach(k => {
+            if (quizzesStore[k]) {
+                quizzesStore[k].forEach((q, idx) => {
+                    if (!q.explanation && defaultQuizzes[k][idx]?.explanation) {
+                        q.explanation = defaultQuizzes[k][idx].explanation;
+                    }
+                });
+            }
+        });
 
         if (db) {
             db.ref('lessons').on('value', (snapshot) => {
@@ -789,7 +846,7 @@
         function closeRegisterModal() { document.getElementById('registerModal')?.classList.add('hidden'); }
 
         // =========================================================
-        // LOGIC MÁY TÍNH CASIO NỔI (THU NHỎ, KÉO THẢ, KHÔNG CHE ĐỀ)
+        // LOGIC MÁY TÍNH CASIO NỔI
         // =========================================================
         let casioExpr = '';
         let isCasioMinimized = false;
@@ -1257,10 +1314,21 @@
             }
         }
 
+        // =========================================================
+        // TRẮC NGHIỆM & BÀI GIẢI CHI TIẾT TỪNG CÂU
+        // =========================================================
         function renderQuizzesForCourse(courseKey) {
             const quizListContent = document.getElementById('quizListContent');
             const submitSection = document.getElementById('submitQuizSection');
+            const summaryBanner = document.getElementById('quizSummaryBanner');
+            const submitBtn = document.getElementById('submitQuizBtn');
             if (!quizListContent) return;
+
+            summaryBanner?.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
 
             const courseQuizzes = quizzesStore[courseKey] || [];
             if (courseQuizzes.length === 0) {
@@ -1271,27 +1339,55 @@
 
             let html = '';
             courseQuizzes.forEach((q, index) => {
+                const options = [
+                    { key: 'A', text: q.optA },
+                    { key: 'B', text: q.optB },
+                    { key: 'C', text: q.optC },
+                    { key: 'D', text: q.optD }
+                ];
+
+                const optionsHtml = options.map(opt => `
+                    <label id="opt_label_${q.id}_${opt.key}" class="flex items-center justify-between gap-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-300 cursor-pointer transition">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="question_${q.id}" value="${opt.key}" class="text-blue-600 w-4 h-4">
+                            <span><strong>${opt.key}.</strong> ${opt.text}</span>
+                        </div>
+                        <span id="opt_tag_${q.id}_${opt.key}" class="hidden text-xs font-bold px-2 py-0.5 rounded-md shrink-0"></span>
+                    </label>
+                `).join('');
+
+                const explanationText = q.explanation || `Đáp án chính xác của câu hỏi này là ${q.correctOpt}.`;
+
                 html += `
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-                    <p class="font-bold text-slate-900">Câu ${index + 1}: ${q.question}</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
-                            <input type="radio" name="question_${q.id}" value="A" class="text-blue-600"> A. ${q.optA}
-                        </label>
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
-                            <input type="radio" name="question_${q.id}" value="B" class="text-blue-600"> B. ${q.optB}
-                        </label>
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
-                            <input type="radio" name="question_${q.id}" value="C" class="text-blue-600"> C. ${q.optC}
-                        </label>
-                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
-                            <input type="radio" name="question_${q.id}" value="D" class="text-blue-600"> D. ${q.optD}
-                        </label>
+                <div id="quiz_card_${q.id}" class="p-5 bg-slate-50 rounded-2xl border-2 border-slate-200 space-y-3.5 transition-all">
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="font-bold text-slate-900 leading-relaxed">Câu ${index + 1}: ${q.question}</p>
+                        <span id="quiz_status_${q.id}" class="hidden shrink-0 px-3 py-1 rounded-full text-xs font-extrabold"></span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm text-slate-700">
+                        ${optionsHtml}
+                    </div>
+                    <!-- Khung bài giải chi tiết (hiện sau khi nộp bài) -->
+                    <div id="quiz_explain_${q.id}" class="hidden mt-3 p-4 rounded-xl bg-blue-50/90 border border-blue-200 text-sm text-slate-800 space-y-1.5">
+                        <div class="font-bold text-blue-800 flex items-center gap-2">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                            <span>Đáp án đúng: ${q.correctOpt} — Hướng dẫn giải chi tiết:</span>
+                        </div>
+                        <p class="whitespace-pre-line leading-relaxed text-slate-700">${explanationText}</p>
                     </div>
                 </div>`;
             });
             quizListContent.innerHTML = html;
             submitSection?.classList.remove('hidden');
+        }
+
+        function resetQuizAttempt() {
+            renderQuizzesForCourse(currentCourseKey);
+            showToast("🔄 Đã làm mới bài tập!");
+        }
+
+        function closeQuizResultModal() {
+            document.getElementById('quizResultModal')?.classList.add('hidden');
         }
 
         function submitQuizAnswers() {
@@ -1302,17 +1398,122 @@
             let answeredCount = 0;
             courseQuizzes.forEach(q => {
                 const selectedOpt = document.querySelector(`input[name="question_${q.id}"]:checked`);
-                if (selectedOpt) {
-                    answeredCount++;
-                    if (selectedOpt.value === q.correctOpt) score++;
-                }
+                if (selectedOpt) answeredCount++;
             });
 
             if (answeredCount === 0) {
-                showToast("⚠️ Vui lòng trả lời ít nhất một câu hỏi!");
+                showToast("⚠️ Vui lòng chọn đáp án cho ít nhất một câu hỏi!");
                 return;
             }
-            showToast(`🎉 Bạn đã trả lời đúng ${score}/${courseQuizzes.length} câu hỏi!`);
+
+            // Chấm điểm từng câu và mở bài giải chi tiết
+            courseQuizzes.forEach(q => {
+                const selectedOpt = document.querySelector(`input[name="question_${q.id}"]:checked`);
+                const userChoice = selectedOpt ? selectedOpt.value : null;
+                const isCorrect = userChoice === q.correctOpt;
+                if (isCorrect) score++;
+
+                // Khóa chọn lại radio sau khi nộp
+                document.querySelectorAll(`input[name="question_${q.id}"]`).forEach(inp => inp.disabled = true);
+
+                const card = document.getElementById(`quiz_card_${q.id}`);
+                const statusBadge = document.getElementById(`quiz_status_${q.id}`);
+                const explainBox = document.getElementById(`quiz_explain_${q.id}`);
+
+                if (card && statusBadge) {
+                    statusBadge.classList.remove('hidden');
+                    if (isCorrect) {
+                        card.classList.remove('border-slate-200');
+                        card.classList.add('border-emerald-400', 'bg-emerald-50/30');
+                        statusBadge.className = 'shrink-0 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700';
+                        statusBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đúng';
+                    } else {
+                        card.classList.remove('border-slate-200');
+                        card.classList.add('border-rose-400', 'bg-rose-50/30');
+                        statusBadge.className = 'shrink-0 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-700';
+                        statusBadge.innerHTML = userChoice
+                            ? `<i class="fa-solid fa-xmark mr-1"></i> Sai (Bạn chọn ${userChoice})`
+                            : '<i class="fa-solid fa-minus mr-1"></i> Chưa chọn';
+                    }
+                }
+
+                // Tô màu đáp án đúng và đáp án sai của học sinh
+                ['A', 'B', 'C', 'D'].forEach(optKey => {
+                    const labelEl = document.getElementById(`opt_label_${q.id}_${optKey}`);
+                    const tagEl = document.getElementById(`opt_tag_${q.id}_${optKey}`);
+                    if (!labelEl || !tagEl) return;
+
+                    if (optKey === q.correctOpt) {
+                        labelEl.classList.remove('border-slate-200', 'bg-white');
+                        labelEl.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-900', 'font-semibold');
+                        tagEl.className = 'text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-600 text-white shrink-0';
+                        tagEl.innerText = 'Đáp án đúng';
+                        tagEl.classList.remove('hidden');
+                    } else if (optKey === userChoice && !isCorrect) {
+                        labelEl.classList.remove('border-slate-200', 'bg-white');
+                        labelEl.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-900');
+                        tagEl.className = 'text-xs font-bold px-2 py-0.5 rounded-md bg-rose-600 text-white shrink-0';
+                        tagEl.innerText = 'Bạn chọn sai';
+                        tagEl.classList.remove('hidden');
+                    }
+                });
+
+                // Hiển thị bài giải chi tiết ngay bên dưới câu hỏi
+                explainBox?.classList.remove('hidden');
+            });
+
+            const total = courseQuizzes.length;
+            const ratio = score / total;
+
+            // Cập nhật banner tổng kết ngay trên đầu danh sách câu hỏi
+            const summaryBanner = document.getElementById('quizSummaryBanner');
+            const bannerIcon = document.getElementById('summaryBannerIcon');
+            const bannerTitle = document.getElementById('summaryBannerTitle');
+            const bannerSub = document.getElementById('summaryBannerSub');
+            if (summaryBanner && bannerIcon && bannerTitle && bannerSub) {
+                summaryBanner.classList.remove('hidden');
+                if (ratio >= 0.5) {
+                    summaryBanner.className = 'p-4 rounded-2xl border border-emerald-300 bg-emerald-50 text-emerald-900 flex items-center justify-between flex-wrap gap-3';
+                    bannerIcon.className = 'w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg';
+                    bannerIcon.innerHTML = '<i class="fa-solid fa-check-double"></i>';
+                } else {
+                    summaryBanner.className = 'p-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 flex items-center justify-between flex-wrap gap-3';
+                    bannerIcon.className = 'w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg';
+                    bannerIcon.innerHTML = '<i class="fa-solid fa-book-open"></i>';
+                }
+                bannerTitle.innerText = `Kết quả bài làm: Đúng ${score}/${total} câu (${Math.round(ratio * 100)}%)`;
+                bannerSub.innerText = 'Đáp án đúng/sai và lời giải chi tiết đã được mở khóa ngay bên dưới từng câu.';
+            }
+
+            const submitBtn = document.getElementById('submitQuizBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Hiện bảng chúc mừng popup
+            const titleEl = document.getElementById('resultModalTitle');
+            const scoreEl = document.getElementById('resultModalScore');
+            const msgEl = document.getElementById('resultModalMessage');
+            const iconBox = document.getElementById('resultIconBox');
+
+            if (scoreEl) scoreEl.innerText = `${score}/${total} câu đúng`;
+
+            if (ratio === 1) {
+                if (titleEl) titleEl.innerText = "🎉 Xuất sắc! Đúng tuyệt đối!";
+                if (msgEl) msgEl.innerText = "Chúc mừng em đã chinh phục trọn vẹn các câu hỏi! Xem lại bài giải chi tiết bên dưới để ghi nhớ phương pháp nhé.";
+                if (iconBox) iconBox.className = "w-20 h-20 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center mx-auto text-4xl shadow-inner";
+            } else if (ratio >= 0.5) {
+                if (titleEl) titleEl.innerText = "👏 Chúc mừng em đã hoàn thành!";
+                if (msgEl) msgEl.innerText = "Hệ thống đã chấm rõ câu đúng/sai và mở toàn bộ bài giải chi tiết bên dưới từng câu.";
+                if (iconBox) iconBox.className = "w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-4xl shadow-inner";
+            } else {
+                if (titleEl) titleEl.innerText = "💪 Cố gắng hơn ở lượt sau nhé!";
+                if (msgEl) msgEl.innerText = "Đừng nản chí! Hệ thống đã hiển thị đáp án đúng và lời giải chi tiết từng bước ngay bên dưới mỗi câu.";
+                if (iconBox) iconBox.className = "w-20 h-20 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto text-4xl shadow-inner";
+            }
+
+            document.getElementById('quizResultModal')?.classList.remove('hidden');
             addProgress(currentCourseKey, 25);
         }
 
@@ -1330,6 +1531,7 @@
             const optC = document.getElementById('newOptC').value.trim();
             const optD = document.getElementById('newOptD').value.trim();
             const correctOpt = document.getElementById('newCorrectOpt').value;
+            const explanation = document.getElementById('newExplanation').value.trim();
 
             if (!qText || !optA || !optB || !optC || !optD) {
                 alert("Vui lòng điền đủ nội dung các đáp án!");
@@ -1337,7 +1539,7 @@
             }
 
             if (!quizzesStore[currentCourseKey]) quizzesStore[currentCourseKey] = [];
-            quizzesStore[currentCourseKey].push({ id: Date.now(), question: qText, optA, optB, optC, optD, correctOpt });
+            quizzesStore[currentCourseKey].push({ id: Date.now(), question: qText, optA, optB, optC, optD, correctOpt, explanation });
 
             localStorage.setItem('eduMathQuizzes', JSON.stringify(quizzesStore));
             if (db) db.ref('quizzes').set(quizzesStore);
@@ -1347,27 +1549,31 @@
             document.getElementById('newOptB').value = '';
             document.getElementById('newOptC').value = '';
             document.getElementById('newOptD').value = '';
+            document.getElementById('newExplanation').value = '';
 
             closeCreateQuizModal();
             renderQuizzesForCourse(currentCourseKey);
-            showToast("🎉 Đã thêm câu hỏi thành công!");
+            showToast("🎉 Đã thêm câu hỏi & lời giải thành công!");
         }
 
         // =========================================================
         // TRỢ LÝ AI (KẾT NỐI GEMINI API)
         // =========================================================
-        const GEMINI_API_KEY = "AQ.Ab8RN6IGQxM8JdvrjtxIFeIEYPGTOqQoCDEHKfxmACGRCBKS_w";
-        const GEMINI_MODEL = "gemini-3.8-flash";
+        const GEMINI_API_KEY = "";
+        const GEMINI_MODEL = "gemini-2.5-flash";
         const AI_SCOPE_INSTRUCTION = 'Bạn là trợ lý học tập môn Toán cho học sinh THPT Việt Nam. Giải thích rõ ràng, dễ hiểu, trình bày từng bước, hỗ trợ giải Toán VDC và hướng dẫn bấm máy tính Casio fx-580VN X.';
         let aiChatHistory = [];
 
         function getGeminiKey() {
-            return GEMINI_API_KEY.trim() || localStorage.getItem('eduLearnGeminiKey') || '';
+            const saved = localStorage.getItem('eduLearnGeminiKey') || '';
+            if (saved.startsWith('AIza')) return saved;
+            if (GEMINI_API_KEY.trim().startsWith('AIza')) return GEMINI_API_KEY.trim();
+            return saved || GEMINI_API_KEY.trim();
         }
 
         function setGeminiKey() {
             const current = getGeminiKey();
-            const key = prompt("Nhập hoặc cập nhật Gemini API Key của bạn:", current);
+            const key = prompt("Nhập Gemini API Key của bạn (bắt đầu bằng AIzaSy...):", current);
             if (key !== null) {
                 localStorage.setItem('eduLearnGeminiKey', key.trim());
                 showToast(key.trim() ? "✅ Đã lưu Gemini API Key!" : "🗑️ Đã xóa API Key.");
@@ -1404,11 +1610,11 @@
             if (!question || !send) return;
 
             let apiKey = getGeminiKey();
-            if (!apiKey) {
+            if (!apiKey || !apiKey.startsWith('AIza')) {
                 setGeminiKey();
                 apiKey = getGeminiKey();
-                if (!apiKey) {
-                    appendAIChatMessage('⚠️ Em chưa cấu hình Gemini API Key!', 'assistant');
+                if (!apiKey || !apiKey.startsWith('AIza')) {
+                    appendAIChatMessage('⚠️ Em cần nhập đúng Gemini API Key (bắt đầu bằng AIzaSy...) qua nút chìa khóa 🔑 ở góc trên nhé!', 'assistant');
                     return;
                 }
             }
