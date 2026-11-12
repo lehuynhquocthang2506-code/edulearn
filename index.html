@@ -12,9 +12,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        :root { color-scheme: light; }
+        body { font-family: 'Inter', sans-serif; background: #f6f6fc; }
+        button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, .35); outline-offset: 2px;
         }
+        .chat-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .chat-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+        
+        /* Nút bấm Casio gọn gàng để vừa làm bài vừa bấm */
+        .casio-btn { 
+            @apply bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-2 rounded-lg text-xs transition border border-slate-700 shadow-sm flex items-center justify-center select-none; 
+        }
+        .casio-op { @apply bg-slate-700/80 text-cyan-300 hover:bg-slate-600 border-slate-600; }
+        .casio-action { @apply bg-rose-600/90 text-white hover:bg-rose-500 border-rose-500; }
+        .casio-equal { @apply bg-emerald-600 text-white hover:bg-emerald-500 border-emerald-500; }
+
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
     </style>
     <!-- Thư viện Firebase SDK cho HTML thuần -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -29,6 +44,13 @@
         <i id="toastIcon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
         <span id="toastMessage" class="text-sm font-medium">Thông báo</span>
     </div>
+
+    <!-- NÚT MỞ MÁY TÍNH CASIO NHANH (FLOATING - GÓC TRÁI DƯỚI ĐỂ KHÔNG ĐÈ CHAT AI) -->
+    <button id="casioFloatingTrigger" onclick="toggleCasioWidget(true)"
+        class="fixed bottom-5 left-5 z-50 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-full shadow-2xl hover:scale-105 transition flex items-center gap-2 font-bold text-xs sm:text-sm border-2 border-white">
+        <i class="fa-solid fa-calculator text-base"></i>
+        <span>Casio Fx</span>
+    </button>
 
     <!-- =========================================================
          THANH HEADER CHUNG
@@ -56,6 +78,9 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <button onclick="toggleCasioWidget(true)" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 transition">
+                    <i class="fa-solid fa-calculator text-blue-600"></i> Máy tính Casio
+                </button>
                 <div id="authButtons" class="flex items-center gap-2">
                     <button onclick="openLoginModal()"
                         class="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition">Đăng
@@ -101,8 +126,7 @@
                 </h1>
 
                 <p class="text-base sm:text-lg text-slate-600 max-w-xl">
-                    Học bằng video, tài liệu tóm tắt và bài tập tương tác — bám sát chương trình THPT, củng cố kiến thức
-                    vững chắc.
+                    Học bằng video, kho bài tập Vận dụng cao THPT và tích hợp máy tính Casio trực tuyến bám sát cấu trúc đề thi mới nhất.
                 </p>
 
                 <div class="flex flex-wrap items-center gap-4 pt-2">
@@ -191,9 +215,8 @@
                     <div class="p-6 space-y-3 flex-grow flex flex-col justify-between">
                         <div class="space-y-2">
                             <h3 class="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition">Toán 12 -
-                                Ôn Thi THPT Quốc Gia</h3>
-                            <p class="text-slate-600 text-sm line-clamp-2">Nắm vững Đạo hàm, Tích phân và các dạng toán
-                                vận dụng cao.</p>
+                                Ôn Thi THPT Quốc Gia (Có bài tập VDC)</h3>
+                            <p class="text-slate-600 text-sm line-clamp-2">Nắm vững Đạo hàm, Tích phân hàm ẩn và các dạng toán vận dụng cao 9+.</p>
                         </div>
                         <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                             <span class="text-lg font-extrabold text-blue-600">Miễn phí</span>
@@ -217,8 +240,7 @@
                         <div class="space-y-2">
                             <h3 class="text-lg font-bold text-slate-800 group-hover:text-cyan-600 transition">Toán 11 -
                                 Hình Học Không Gian - Chinh Phục Điểm 9+</h3>
-                            <p class="text-slate-600 text-sm line-clamp-2">Phương pháp giải nhanh góc, khoảng cách và
-                                thể tích khối đa diện.</p>
+                            <p class="text-slate-600 text-sm line-clamp-2">Phương pháp giải nhanh góc, khoảng cách và thể tích khối đa diện.</p>
                         </div>
                         <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                             <span class="text-lg font-extrabold text-blue-600">Miễn phí</span>
@@ -242,8 +264,7 @@
                         <div class="space-y-2">
                             <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">Toán 10
                                 - Đại Số & Lượng Giác Cơ Bản Đến Nâng Cao</h3>
-                            <p class="text-slate-600 text-sm line-clamp-2">Hệ thống công thức Lượng giác, Phương trình
-                                và Bất phương trình nền tảng.</p>
+                            <p class="text-slate-600 text-sm line-clamp-2">Hệ thống công thức Lượng giác, Phương trình và Bất phương trình nền tảng.</p>
                         </div>
                         <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
                             <span class="text-lg font-extrabold text-blue-600">Miễn phí</span>
@@ -294,8 +315,7 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-1">
                     <span id="courseBadge"
                         class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Khóa học</span>
-                    <h1 id="currentVideoTitle" class="text-2xl font-extrabold text-slate-900 pt-2">Vui lòng chọn bài
-                        giảng</h1>
+                    <h1 id="currentVideoTitle" class="text-2xl font-extrabold text-slate-900 pt-2">Vui lòng chọn bài giảng</h1>
                 </div>
 
                 <!-- Form Thêm Bài Giảng từ Link YouTube/Online (Chỉ Giáo viên thấy) -->
@@ -310,8 +330,7 @@
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:bg-white transition">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Đường link video (YouTube
-                                hoặc link MP4)</label>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Đường link video (YouTube hoặc link MP4)</label>
                             <input type="url" id="videoUrlInput" placeholder="https://www.youtube.com/watch?v=..."
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:bg-white transition">
                         </div>
@@ -324,6 +343,13 @@
 
                 <!-- Cục trắc nghiệm kết hợp quyền giáo viên -->
                 <div id="quizContainer" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                    <div class="flex items-center justify-between flex-wrap gap-4 border-b pb-4">
+                        <h3 class="font-bold text-slate-900 text-lg"><i class="fa-solid fa-file-pen text-blue-600 mr-2"></i> Luyện tập trắc nghiệm (Có câu hỏi VDC 9+)</h3>
+                        <button onclick="toggleCasioWidget(true)" class="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-calculator"></i> Mở Casio tính nhanh
+                        </button>
+                    </div>
+
                     <div id="teacherSection" class="hidden p-4 bg-purple-50 rounded-xl border border-purple-200">
                         <h3 class="text-sm font-bold text-purple-900 mb-2">Khu vực dành cho Giáo viên</h3>
                         <button onclick="openCreateQuizModal()"
@@ -334,7 +360,7 @@
 
                     <!-- Danh sách câu hỏi cho học sinh -->
                     <div id="quizListContent" class="space-y-6">
-                        <p class="text-sm text-slate-500 italic">Chưa có câu hỏi trắc nghiệm nào cho khóa học này.</p>
+                        <p class="text-sm text-slate-500 italic">Đang tải câu hỏi...</p>
                     </div>
 
                     <!-- Nút nộp bài -->
@@ -365,6 +391,78 @@
         </div>
     </main>
 
+    <!-- =========================================================
+         CỬA SỔ NỔI MÁY TÍNH CASIO TRỰC TUYẾN (THU NHỎ, KÉO THẢ, KHÔNG CHE ĐỀ)
+         ========================================================= -->
+    <div id="casioWidget" class="fixed bottom-5 left-5 z-[55] hidden w-[285px] sm:w-[300px] bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden transition-all duration-200">
+        <!-- Thanh tiêu đề kéo thả -->
+        <div id="casioDragHeader" class="flex items-center justify-between bg-slate-800/90 px-3.5 py-2.5 border-b border-slate-700 cursor-move select-none">
+            <div class="flex items-center gap-2 pointer-events-none">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+                <span class="font-bold text-xs tracking-wide text-slate-200">CASIO fx-580VN X</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <!-- Nút Thu nhỏ / Mở rộng -->
+                <button type="button" onclick="toggleCasioMinimize()" id="casioMinBtn" title="Thu nhỏ / Mở rộng"
+                    class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200 transition text-xs">
+                    <i id="casioMinIcon" class="fa-solid fa-minus"></i>
+                </button>
+                <!-- Nút Đóng -->
+                <button type="button" onclick="toggleCasioWidget(false)" title="Đóng máy tính"
+                    class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-rose-600 flex items-center justify-center text-slate-200 hover:text-white transition text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Thân máy tính -->
+        <div id="casioBody" class="p-3 space-y-2.5">
+            <!-- Màn hình Casio -->
+            <div class="bg-emerald-950/90 border border-emerald-800/70 rounded-xl px-3 py-2 space-y-0.5 font-mono shadow-inner">
+                <div id="casioExpression" class="text-[11px] text-emerald-400/90 min-h-[16px] text-right truncate">0</div>
+                <div id="casioResult" class="text-xl font-bold text-emerald-200 text-right truncate">0</div>
+            </div>
+
+            <!-- Bàn phím Casio -->
+            <div class="grid grid-cols-5 gap-1.5">
+                <button type="button" onclick="casioInput('Math.sin(')" class="casio-btn casio-op">sin</button>
+                <button type="button" onclick="casioInput('Math.cos(')" class="casio-btn casio-op">cos</button>
+                <button type="button" onclick="casioInput('Math.tan(')" class="casio-btn casio-op">tan</button>
+                <button type="button" onclick="casioClear()" class="casio-btn casio-action">AC</button>
+                <button type="button" onclick="casioBackspace()" class="casio-btn casio-action"><i class="fa-solid fa-delete-left"></i></button>
+
+                <button type="button" onclick="casioInput('Math.sqrt(')" class="casio-btn casio-op">√</button>
+                <button type="button" onclick="casioInput('**2')" class="casio-btn casio-op">x²</button>
+                <button type="button" onclick="casioInput('**')" class="casio-btn casio-op">x^y</button>
+                <button type="button" onclick="casioInput('(')" class="casio-btn casio-op">(</button>
+                <button type="button" onclick="casioInput(')')" class="casio-btn casio-op">)</button>
+
+                <button type="button" onclick="casioInput('7')" class="casio-btn">7</button>
+                <button type="button" onclick="casioInput('8')" class="casio-btn">8</button>
+                <button type="button" onclick="casioInput('9')" class="casio-btn">9</button>
+                <button type="button" onclick="casioInput('/')" class="casio-btn casio-op">÷</button>
+                <button type="button" onclick="casioInput('Math.log10(')" class="casio-btn casio-op">log</button>
+
+                <button type="button" onclick="casioInput('4')" class="casio-btn">4</button>
+                <button type="button" onclick="casioInput('5')" class="casio-btn">5</button>
+                <button type="button" onclick="casioInput('6')" class="casio-btn">6</button>
+                <button type="button" onclick="casioInput('*')" class="casio-btn casio-op">×</button>
+                <button type="button" onclick="casioInput('Math.log(')" class="casio-btn casio-op">ln</button>
+
+                <button type="button" onclick="casioInput('1')" class="casio-btn">1</button>
+                <button type="button" onclick="casioInput('2')" class="casio-btn">2</button>
+                <button type="button" onclick="casioInput('3')" class="casio-btn">3</button>
+                <button type="button" onclick="casioInput('-')" class="casio-btn casio-op">-</button>
+                <button type="button" onclick="casioInput('Math.PI')" class="casio-btn casio-op">π</button>
+
+                <button type="button" onclick="casioInput('0')" class="casio-btn col-span-2">0</button>
+                <button type="button" onclick="casioInput('.')" class="casio-btn">.</button>
+                <button type="button" onclick="casioInput('+')" class="casio-btn casio-op">+</button>
+                <button type="button" onclick="casioCalculate()" class="casio-btn casio-equal">=</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 mt-20 py-8">
         <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm space-y-1">
@@ -378,6 +476,34 @@
                     class="font-medium text-slate-600">(Lớp 12A7)</span></p>
         </div>
     </footer>
+
+    <!-- Trợ lý học tập AI -->
+    <div id="aiChatWidget" class="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3">
+        <section id="aiChatPanel" class="hidden w-[min(92vw,390px)] h-[min(70vh,590px)] bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex-col" aria-label="Trợ lý học tập AI">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white px-5 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div><h2 class="font-bold">Trợ lý học tập AI</h2><p class="text-xs text-blue-100">Hỗ trợ Toán VDC và ôn thi THPT</p></div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button type="button" onclick="setGeminiKey()" title="Cài đặt API Key" class="w-8 h-8 rounded-xl hover:bg-white/15 flex items-center justify-center"><i class="fa-solid fa-key text-xs"></i></button>
+                    <button type="button" onclick="toggleAIChat(false)" aria-label="Đóng chat" class="w-8 h-8 rounded-xl hover:bg-white/15 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div id="aiChatMessages" class="chat-scroll flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50" aria-live="polite">
+                <div class="flex justify-start"><div class="chat-message max-w-[88%] bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-slate-700 shadow-sm">Chào em! Thầy/cô có thể giúp em giải thích bài toán Vận dụng cao, tính tích phân hàm ẩn hoặc hướng dẫn bấm máy Casio. Em cần hỏi gì nào?</div></div>
+            </div>
+            <form id="aiChatForm" class="p-3 border-t border-slate-200 bg-white" onsubmit="sendAIChatMessage(event)">
+                <div class="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
+                    <textarea id="aiChatInput" rows="1" maxlength="1500" aria-label="Nhập câu hỏi" placeholder="Nhập câu hỏi bài tập Toán..." class="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none max-h-28" required></textarea>
+                    <button id="aiChatSend" type="submit" aria-label="Gửi câu hỏi" class="w-10 h-10 shrink-0 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </section>
+        <button id="aiChatToggle" type="button" onclick="toggleAIChat()" aria-label="Mở trợ lý học tập AI" aria-expanded="false" class="flex items-center gap-2 rounded-full bg-indigo-600 text-white px-5 py-3.5 font-semibold shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-0.5 transition">
+            <i class="fa-solid fa-comments text-lg"></i><span>Hỏi trợ lý AI</span>
+        </button>
+    </div>
 
     <!-- MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
     <div id="loginModal"
@@ -577,7 +703,47 @@
 
         let lessonsStore = JSON.parse(localStorage.getItem('eduMathLessons')) || defaultLessons;
 
-        // Lắng nghe Firebase Realtime Bài Học
+        const defaultQuizzes = {
+            math12: [
+                {
+                    id: 101,
+                    question: "Cho hàm số y = f(x) có đạo hàm liên tục trên ℝ và đồ thị y = f'(x) như đồ thị hàm số bậc ba có hai điểm cực trị x = -1 và x = 1. Số điểm cực trị của hàm số g(x) = f(x² - 2x) là:",
+                    optA: "3", optB: "5", optC: "4", optD: "6",
+                    correctOpt: "B"
+                },
+                {
+                    id: 102,
+                    question: "Cho hàm số f(x) liên tục trên ℝ và thỏa mãn f(x) + f(2 - x) = 3x² - 6x + 4 với mọi x ∈ ℝ. Tính tích phân I = ∫(từ 0 đến 2) f(x) dx.",
+                    optA: "I = 2", optB: "I = 4", optC: "I = 3", optD: "I = 1",
+                    correctOpt: "A"
+                },
+                {
+                    id: 103,
+                    question: "Trong không gian Oxyz, cho mặt cầu (S): x² + y² + z² - 2x - 4y - 6z = 2 và mặt phẳng (P): 2x - y + 2z + 5 = 0. Gọi M, N là hai điểm thuộc (S) sao cho đoạn thẳng MN có độ dài lớn nhất và đường thẳng MN song song với (P). Khoảng cách từ gốc tọa độ O đến đường thẳng MN bằng:",
+                    optA: "√5", optB: "2√2", optC: "3", optD: "√6",
+                    correctOpt: "B"
+                }
+            ],
+            math11: [
+                {
+                    id: 201,
+                    question: "Cho hình chóp S.ABCD có đáy ABCD là hình vuông cạnh a, SA ⊥ (ABCD) và SA = a√3. Khoảng cách giữa hai đường thẳng SB và CD bằng:",
+                    optA: "a√3 / 2", optB: "a√2", optC: "a", optD: "a√3",
+                    correctOpt: "C"
+                }
+            ],
+            math10: [
+                {
+                    id: 301,
+                    question: "Tìm tất cả các giá trị của tham số m để phương trình x² - 2mx + m² - 4 = 0 có hai nghiệm phân biệt x₁, x₂ thỏa mãn x₁² + x₂² = 10.",
+                    optA: "m = ±1", optB: "m = 3 hoặc m = -1", optC: "m = 2 hoặc m = -2", optD: "m = ±3",
+                    correctOpt: "D"
+                }
+            ]
+        };
+
+        let quizzesStore = JSON.parse(localStorage.getItem('eduMathQuizzes')) || defaultQuizzes;
+
         if (db) {
             db.ref('lessons').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -589,13 +755,23 @@
                 }
                 if (typeof renderPlaylist === 'function') renderPlaylist();
             });
+            db.ref('quizzes').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    quizzesStore = data;
+                    localStorage.setItem('eduMathQuizzes', JSON.stringify(data));
+                    if (typeof renderQuizzesForCourse === 'function') {
+                        renderQuizzesForCourse(currentCourseKey);
+                    }
+                }
+            });
         }
 
         document.addEventListener("DOMContentLoaded", function () {
             checkUserState();
+            initCasioDraggable();
         });
 
-        // 3. Hàm kiểm tra quyền Giáo viên
         function isTeacherUser() {
             const rawUser = localStorage.getItem('currentUser') || localStorage.getItem('eduMathUser') || '{}';
             try {
@@ -607,56 +783,212 @@
             }
         }
 
-        // Modal Đăng Nhập / Đăng Ký
-        function openLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.remove('hidden');
+        function openLoginModal() { document.getElementById('loginModal')?.classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('loginModal')?.classList.add('hidden'); }
+        function openRegisterModal() { document.getElementById('registerModal')?.classList.remove('hidden'); }
+        function closeRegisterModal() { document.getElementById('registerModal')?.classList.add('hidden'); }
+
+        // =========================================================
+        // LOGIC MÁY TÍNH CASIO NỔI (THU NHỎ, KÉO THẢ, KHÔNG CHE ĐỀ)
+        // =========================================================
+        let casioExpr = '';
+        let isCasioMinimized = false;
+
+        function toggleCasioWidget(show) {
+            const widget = document.getElementById('casioWidget');
+            const trigger = document.getElementById('casioFloatingTrigger');
+            if (!widget) return;
+
+            const shouldShow = typeof show === 'boolean' ? show : widget.classList.contains('hidden');
+            widget.classList.toggle('hidden', !shouldShow);
+            if (trigger) trigger.classList.toggle('hidden', shouldShow);
+
+            if (shouldShow && isCasioMinimized) {
+                toggleCasioMinimize(false);
+            }
         }
 
-        function closeLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.add('hidden');
+        function toggleCasioMinimize(forceMin) {
+            const body = document.getElementById('casioBody');
+            const widget = document.getElementById('casioWidget');
+            const icon = document.getElementById('casioMinIcon');
+            if (!body || !widget) return;
+
+            isCasioMinimized = typeof forceMin === 'boolean' ? forceMin : !isCasioMinimized;
+            body.classList.toggle('hidden', isCasioMinimized);
+
+            if (isCasioMinimized) {
+                widget.classList.remove('w-[285px]', 'sm:w-[300px]');
+                widget.classList.add('w-56');
+                if (icon) icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
+            } else {
+                widget.classList.remove('w-56');
+                widget.classList.add('w-[285px]', 'sm:w-[300px]');
+                if (icon) icon.className = 'fa-solid fa-minus';
+            }
         }
 
-        function openRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            if (modal) modal.classList.remove('hidden');
+        function formatCasioDisplay(rawExpr) {
+            if (!rawExpr) return '0';
+            return rawExpr
+                .replace(/Math\.sin\(/g, 'sin(')
+                .replace(/Math\.cos\(/g, 'cos(')
+                .replace(/Math\.tan\(/g, 'tan(')
+                .replace(/Math\.sqrt\(/g, '√(')
+                .replace(/Math\.log10\(/g, 'log(')
+                .replace(/Math\.log\(/g, 'ln(')
+                .replace(/Math\.PI/g, 'π')
+                .replace(/\*\*2/g, '²')
+                .replace(/\*\*/g, '^')
+                .replace(/\*/g, '×')
+                .replace(/\//g, '÷');
         }
 
-        function closeRegisterModal() {
-            const modal = document.getElementById('registerModal');
-            if (modal) modal.classList.add('hidden');
+        function casioInput(val) {
+            const exprElem = document.getElementById('casioExpression');
+            if (casioExpr === '0' && !['+', '-', '*', '/', '**2', '**'].includes(val)) {
+                casioExpr = val;
+            } else {
+                casioExpr += val;
+            }
+            if (exprElem) exprElem.innerText = formatCasioDisplay(casioExpr);
         }
 
-        // Xử lý Đăng Nhập / Đăng Ký / Đăng Xuất
+        function casioClear() {
+            casioExpr = '';
+            const exprElem = document.getElementById('casioExpression');
+            const resElem = document.getElementById('casioResult');
+            if (exprElem) exprElem.innerText = '0';
+            if (resElem) resElem.innerText = '0';
+        }
+
+        function casioBackspace() {
+            const tokens = ['Math.log10(', 'Math.sqrt(', 'Math.sin(', 'Math.cos(', 'Math.tan(', 'Math.log(', 'Math.PI', '**2', '**'];
+            let matched = false;
+            for (const token of tokens) {
+                if (casioExpr.endsWith(token)) {
+                    casioExpr = casioExpr.slice(0, -token.length);
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                casioExpr = casioExpr.slice(0, -1);
+            }
+            const exprElem = document.getElementById('casioExpression');
+            if (exprElem) exprElem.innerText = formatCasioDisplay(casioExpr);
+        }
+
+        function casioCalculate() {
+            const resElem = document.getElementById('casioResult');
+            if (!casioExpr) return;
+            try {
+                const openCount = (casioExpr.match(/\(/g) || []).length;
+                const closeCount = (casioExpr.match(/\)/g) || []).length;
+                let exprToEval = casioExpr + ')'.repeat(Math.max(0, openCount - closeCount));
+
+                let result = Function('"use strict";return (' + exprToEval + ')')();
+                if (result === undefined || isNaN(result) || !isFinite(result)) {
+                    if (resElem) resElem.innerText = 'Math ERROR';
+                } else {
+                    const formatted = Number(result.toFixed(8));
+                    if (resElem) resElem.innerText = formatted;
+                    casioExpr = String(formatted);
+                }
+            } catch (err) {
+                if (resElem) resElem.innerText = 'Syntax ERROR';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const widget = document.getElementById('casioWidget');
+            if (!widget || widget.classList.contains('hidden') || isCasioMinimized) return;
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            if (/^[0-9+\-*/().]$/.test(e.key)) {
+                e.preventDefault();
+                casioInput(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                casioCalculate();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                casioBackspace();
+            } else if (e.key === 'Escape') {
+                casioClear();
+            }
+        });
+
+        function initCasioDraggable() {
+            const widget = document.getElementById('casioWidget');
+            const header = document.getElementById('casioDragHeader');
+            if (!widget || !header) return;
+
+            let isDragging = false;
+            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+            const onStart = (clientX, clientY) => {
+                isDragging = true;
+                const rect = widget.getBoundingClientRect();
+                widget.style.left = rect.left + 'px';
+                widget.style.top = rect.top + 'px';
+                widget.style.bottom = 'auto';
+                widget.style.right = 'auto';
+                startX = clientX;
+                startY = clientY;
+                initialLeft = rect.left;
+                initialTop = rect.top;
+            };
+
+            const onMove = (clientX, clientY) => {
+                if (!isDragging) return;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                const maxLeft = window.innerWidth - widget.offsetWidth;
+                const maxTop = window.innerHeight - widget.offsetHeight;
+                widget.style.left = Math.max(0, Math.min(maxLeft, initialLeft + dx)) + 'px';
+                widget.style.top = Math.max(0, Math.min(maxTop, initialTop + dy)) + 'px';
+            };
+
+            const onEnd = () => { isDragging = false; };
+
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button')) return;
+                onStart(e.clientX, e.clientY);
+            });
+            document.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+            document.addEventListener('mouseup', onEnd);
+
+            header.addEventListener('touchstart', (e) => {
+                if (e.target.closest('button')) return;
+                const touch = e.touches[0];
+                onStart(touch.clientX, touch.clientY);
+            }, { passive: true });
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const touch = e.touches[0];
+                onMove(touch.clientX, touch.clientY);
+            }, { passive: true });
+            document.addEventListener('touchend', onEnd);
+        }
+
         function handleRegister(event) {
             if (event) event.preventDefault();
             const fullName = document.getElementById('regFullName')?.value.trim() || 'Học Viên';
             const role = document.getElementById('regRole')?.value || 'student';
-
             const emailElem = document.querySelector('#registerModal input[type="email"]');
             const email = emailElem ? emailElem.value.trim().toLowerCase() : '';
 
-            if (!email) {
-                showToast("⚠️ Vui lòng nhập Email!");
-                return;
-            }
+            if (!email) { showToast("⚠️ Vui lòng nhập Email!"); return; }
 
             let usersList = JSON.parse(localStorage.getItem('eduMathUsersList')) || [];
-
-            const existingUser = usersList.find(u => u.email === email);
-            if (existingUser) {
+            if (usersList.find(u => u.email === email)) {
                 showToast("❌ Email này đã được đăng ký! Vui lòng đăng nhập.");
                 return;
             }
 
-            const newUser = {
-                email: email,
-                name: fullName,
-                role: role,
-                progress: { math12: 0, math11: 0, math10: 0 }
-            };
-
+            const newUser = { email, name: fullName, role, progress: { math12: 0, math11: 0, math10: 0 } };
             usersList.push(newUser);
             localStorage.setItem('eduMathUsersList', JSON.stringify(usersList));
             localStorage.setItem('eduMathUser', JSON.stringify(newUser));
@@ -664,17 +996,13 @@
 
             closeRegisterModal();
             checkUserState();
-            showToast(`🎉 Đăng ký thành công! Chào mừng ${newUser.name} (${role === 'teacher' ? 'Giáo viên' : 'Học sinh'}).`);
+            showToast(`🎉 Đăng ký thành công! Chào mừng ${newUser.name}.`);
         }
 
         function handleLogin(event) {
             if (event) event.preventDefault();
             const usernameInput = document.getElementById('loginUsername')?.value.trim().toLowerCase() || '';
-
-            if (!usernameInput) {
-                showToast("⚠️ Vui lòng nhập Tên đăng nhập hoặc Email!");
-                return;
-            }
+            if (!usernameInput) { showToast("⚠️ Vui lòng nhập Tên đăng nhập hoặc Email!"); return; }
 
             const usersList = JSON.parse(localStorage.getItem('eduMathUsersList')) || [];
             const foundUser = usersList.find(u => u.email === usernameInput || u.name.toLowerCase() === usernameInput);
@@ -699,15 +1027,10 @@
             }
         }
 
-        // Chuyển trang & Khóa học
         function showPage(pageId) {
-            const home = document.getElementById('homePage');
-            const lesson = document.getElementById('lessonPage');
-            if (home) home.classList.add('hidden');
-            if (lesson) lesson.classList.add('hidden');
-
-            const target = document.getElementById(pageId);
-            if (target) target.classList.remove('hidden');
+            document.getElementById('homePage')?.classList.add('hidden');
+            document.getElementById('lessonPage')?.classList.add('hidden');
+            document.getElementById(pageId)?.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -722,18 +1045,14 @@
             renderQuizzesForCourse(courseKey);
 
             const lessons = lessonsStore[currentCourseKey] || [];
-            if (lessons.length > 0) {
-                playVideo(lessons[0]);
-            }
+            if (lessons.length > 0) playVideo(lessons[0]);
         }
 
-        // Render danh sách bài học (Phân quyền chuẩn: Chỉ Giáo viên mới thấy nút Sửa và Xóa)
         function renderPlaylist() {
             const playlist = document.getElementById('playlist');
             if (!playlist) return;
             playlist.innerHTML = '';
             const lessons = lessonsStore[currentCourseKey] || [];
-
             const isTeacher = isTeacherUser();
 
             if (lessons.length === 0) {
@@ -744,25 +1063,18 @@
             lessons.forEach((item) => {
                 const div = document.createElement('div');
                 div.className = "w-full p-3.5 rounded-xl border border-slate-100 hover:bg-blue-50 hover:border-blue-200 transition flex items-center justify-between gap-2 text-sm font-medium text-slate-700";
-
                 const teacherControlsHtml = isTeacher ? `
                 <div class="flex items-center gap-1 shrink-0">
-                    <button onclick="openEditLessonModal(${item.id}, event)" title="Chỉnh sửa bài giảng" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition">
-                        <i class="fa-solid fa-pen text-xs"></i>
-                    </button>
-                    <button onclick="deleteLesson(${item.id}, event)" title="Xóa bài học" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                </div>
-            ` : '';
+                    <button onclick="openEditLessonModal(${item.id}, event)" title="Chỉnh sửa" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <button onclick="deleteLesson(${item.id}, event)" title="Xóa" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                </div>` : '';
 
                 div.innerHTML = `
                 <button onclick="playVideoById(${item.id})" class="flex-1 text-left flex items-center gap-2 line-clamp-1">
                     <i class="fa-solid fa-play-circle text-blue-600 flex-shrink-0"></i>
                     <span class="truncate">${item.title}</span>
                 </button>
-                ${teacherControlsHtml}
-            `;
+                ${teacherControlsHtml}`;
                 playlist.appendChild(div);
             });
         }
@@ -773,97 +1085,53 @@
             if (lesson) playVideo(lesson);
         }
 
-        // HÀM CHỈNH SỬA BÀI HỌC (Dành riêng cho Giáo viên)
         function openEditLessonModal(lessonId, event) {
-            if (event) event.stopPropagation();
-
-            if (!isTeacherUser()) {
-                showToast("⛔ Bạn không có quyền chỉnh sửa bài học!");
-                return;
-            }
-
+            event?.stopPropagation();
+            if (!isTeacherUser()) { showToast("⛔ Không có quyền chỉnh sửa!"); return; }
             const lessons = lessonsStore[currentCourseKey] || [];
             const lesson = lessons.find(l => l.id === lessonId);
             if (!lesson) return;
-
             document.getElementById('editLessonId').value = lesson.id;
             document.getElementById('editLessonTitle').value = lesson.title || '';
             document.getElementById('editLessonSrc').value = lesson.src || '';
-
-            const modal = document.getElementById('editLessonModal');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('editLessonModal')?.classList.remove('hidden');
         }
 
-        function closeEditLessonModal() {
-            const modal = document.getElementById('editLessonModal');
-            if (modal) modal.classList.add('hidden');
-        }
+        function closeEditLessonModal() { document.getElementById('editLessonModal')?.classList.add('hidden'); }
 
         function saveEditLesson() {
-            if (!isTeacherUser()) {
-                showToast("⛔ Chỉ Giáo viên mới có quyền thực hiện thao tác này!");
-                return;
-            }
-
+            if (!isTeacherUser()) return;
             const id = Number(document.getElementById('editLessonId').value);
             const newTitle = document.getElementById('editLessonTitle').value.trim();
             const newSrc = document.getElementById('editLessonSrc').value.trim();
-
-            if (!newTitle) {
-                alert("Vui lòng nhập tên bài giảng!");
-                return;
-            }
+            if (!newTitle) { alert("Vui lòng nhập tên bài giảng!"); return; }
 
             const lessons = lessonsStore[currentCourseKey] || [];
-            const lessonIndex = lessons.findIndex(l => l.id === id);
-
-            if (lessonIndex !== -1) {
-                lessons[lessonIndex].title = newTitle;
-                lessons[lessonIndex].src = newSrc;
-
+            const idx = lessons.findIndex(l => l.id === id);
+            if (idx !== -1) {
+                lessons[idx].title = newTitle;
+                lessons[idx].src = newSrc;
                 if (db) {
-                    db.ref('lessons').set(lessonsStore)
-                        .then(() => {
-                            closeEditLessonModal();
-                            renderPlaylist();
-                            showToast("✏️ Đã cập nhật thông tin bài học!");
-                        })
-                        .catch((error) => { showToast("❌ Lỗi: " + error.message); });
+                    db.ref('lessons').set(lessonsStore).then(() => {
+                        closeEditLessonModal(); renderPlaylist(); showToast("✏️ Đã cập nhật bài học!");
+                    });
                 } else {
                     localStorage.setItem('eduMathLessons', JSON.stringify(lessonsStore));
-                    closeEditLessonModal();
-                    renderPlaylist();
-                    showToast("✏️ Đã cập nhật thông tin bài học!");
+                    closeEditLessonModal(); renderPlaylist(); showToast("✏️ Đã cập nhật bài học!");
                 }
             }
         }
-        // Hàm phần quyền giáo viên: Tăng vai trò của giáo viên để có thể chỉnh sửa bài học. 
-        // HÀM XÓA BÀI HỌC (Đã phân quyền Giáo viên)
+
         function deleteLesson(lessonId, event) {
-            if (event) event.stopPropagation();
-
-            if (!isTeacherUser()) {
-                showToast("⛔ Chỉ giáo viên mới có quyền xóa video bài học!");
-                return;
-            }
-
-            if (!confirm("⚠️ Bạn có chắc chắn muốn xóa bài học này không?")) return;
-
+            event?.stopPropagation();
+            if (!isTeacherUser()) { showToast("⛔ Không có quyền xóa!"); return; }
+            if (!confirm("⚠️ Bạn có chắc muốn xóa bài học này?")) return;
             lessonsStore[currentCourseKey] = (lessonsStore[currentCourseKey] || []).filter(item => item.id !== lessonId);
-
             if (db) {
-                db.ref('lessons').set(lessonsStore)
-                    .then(() => {
-                        renderPlaylist();
-                        showToast("🗑️ Đã xóa bài học thành công!");
-                    })
-                    .catch((error) => {
-                        showToast("❌ Lỗi xóa: " + error.message);
-                    });
+                db.ref('lessons').set(lessonsStore).then(() => { renderPlaylist(); showToast("🗑️ Đã xóa bài học!"); });
             } else {
                 localStorage.setItem('eduMathLessons', JSON.stringify(lessonsStore));
-                renderPlaylist();
-                showToast("🗑️ Đã xóa bài học thành công!");
+                renderPlaylist(); showToast("🗑️ Đã xóa bài học!");
             }
         }
 
@@ -881,19 +1149,17 @@
             const title = document.getElementById('currentVideoTitle');
 
             if (title) title.innerText = lesson.title;
-
-            if (videoPlayer) { videoPlayer.classList.add('hidden'); videoPlayer.pause(); }
-            if (youtubePlayer) { youtubePlayer.classList.add('hidden'); youtubePlayer.src = ''; }
-            if (placeholder) placeholder.classList.add('hidden');
+            videoPlayer?.classList.add('hidden'); videoPlayer?.pause();
+            youtubePlayer?.classList.add('hidden'); youtubePlayer.src = '';
+            placeholder?.classList.add('hidden');
 
             if (!lesson.src) {
-                if (placeholder) placeholder.classList.remove('hidden');
+                placeholder?.classList.remove('hidden');
                 showToast("Bài học này chưa có link video!");
                 return;
             }
 
             const ytEmbedUrl = getYouTubeEmbedUrl(lesson.src);
-
             if (ytEmbedUrl && youtubePlayer) {
                 youtubePlayer.src = ytEmbedUrl;
                 youtubePlayer.classList.remove('hidden');
@@ -902,75 +1168,50 @@
                 videoPlayer.classList.remove('hidden');
                 videoPlayer.play();
             }
-
             addProgress(currentCourseKey, 10);
         }
 
         function handleUploadVideo() {
-            if (!isTeacherUser()) {
-                showToast("⛔ Chỉ Giáo viên mới được phép tải lên/thêm bài giảng!");
-                return;
-            }
-
-            const titleElem = document.getElementById('uploadTitle');
-            const urlElem = document.getElementById('videoUrlInput');
-            const titleInput = titleElem ? titleElem.value.trim() : '';
-            const urlInput = urlElem ? urlElem.value.trim() : '';
-
-            if (!titleInput) { showToast("⚠️ Vui lòng nhập tên bài giảng!"); return; }
-            if (!urlInput) { showToast("⚠️ Vui lòng dán đường link video (YouTube)!"); return; }
+            if (!isTeacherUser()) { showToast("⛔ Chỉ Giáo viên mới được thêm bài giảng!"); return; }
+            const titleInput = document.getElementById('uploadTitle')?.value.trim() || '';
+            const urlInput = document.getElementById('videoUrlInput')?.value.trim() || '';
+            if (!titleInput || !urlInput) { showToast("⚠️ Vui lòng nhập đủ tên và link video!"); return; }
 
             const newLesson = { id: Date.now(), title: titleInput, src: urlInput };
-
             if (!lessonsStore[currentCourseKey]) lessonsStore[currentCourseKey] = [];
             lessonsStore[currentCourseKey].push(newLesson);
 
             if (db) {
-                db.ref('lessons').set(lessonsStore)
-                    .then(() => {
-                        renderPlaylist();
-                        playVideo(newLesson);
-                        if (titleElem) titleElem.value = '';
-                        if (urlElem) urlElem.value = '';
-                        showToast("🎉 Thêm bài giảng thành công!");
-                    })
-                    .catch((error) => { showToast("❌ Lỗi đồng bộ: " + error.message); });
+                db.ref('lessons').set(lessonsStore).then(() => {
+                    renderPlaylist(); playVideo(newLesson);
+                    document.getElementById('uploadTitle').value = '';
+                    document.getElementById('videoUrlInput').value = '';
+                    showToast("🎉 Thêm bài giảng thành công!");
+                });
             } else {
                 localStorage.setItem('eduMathLessons', JSON.stringify(lessonsStore));
-                renderPlaylist();
-                playVideo(newLesson);
-                if (titleElem) titleElem.value = '';
-                if (urlElem) urlElem.value = '';
-                showToast("🎉 Đã thêm bài giảng!");
+                renderPlaylist(); playVideo(newLesson);
+                showToast("🎉 Thêm bài giảng thành công!");
             }
         }
 
-        // Tiến độ & Người dùng
         function renderProgressUI() {
             const savedUser = JSON.parse(localStorage.getItem('eduMathUser'));
-            let progress = { math12: 0, math11: 0, math10: 0 };
-            if (savedUser && savedUser.progress) progress = savedUser.progress;
-
-            const p12 = document.getElementById('percentMath12'), b12 = document.getElementById('barMath12');
-            if (p12) p12.innerText = (progress.math12 || 0) + '%';
-            if (b12) b12.style.width = (progress.math12 || 0) + '%';
-
-            const p11 = document.getElementById('percentMath11'), b11 = document.getElementById('barMath11');
-            if (p11) p11.innerText = (progress.math11 || 0) + '%';
-            if (b11) b11.style.width = (progress.math11 || 0) + '%';
-
-            const p10 = document.getElementById('percentMath10'), b10 = document.getElementById('barMath10');
-            if (p10) p10.innerText = (progress.math10 || 0) + '%';
-            if (b10) b10.style.width = (progress.math10 || 0) + '%';
+            let progress = savedUser?.progress || { math12: 0, math11: 0, math10: 0 };
+            ['12', '11', '10'].forEach(grade => {
+                const pElem = document.getElementById(`percentMath${grade}`);
+                const bElem = document.getElementById(`barMath${grade}`);
+                const val = progress[`math${grade}`] || 0;
+                if (pElem) pElem.innerText = val + '%';
+                if (bElem) bElem.style.width = val + '%';
+            });
         }
 
         function addProgress(courseKey, percentToAdd) {
             let savedUser = JSON.parse(localStorage.getItem('eduMathUser'));
             if (!savedUser) return;
-
             if (!savedUser.progress) savedUser.progress = { math12: 0, math11: 0, math10: 0 };
             savedUser.progress[courseKey] = Math.min(100, (savedUser.progress[courseKey] || 0) + percentToAdd);
-
             localStorage.setItem('eduMathUser', JSON.stringify(savedUser));
             renderProgressUI();
         }
@@ -980,42 +1221,24 @@
             const authButtons = document.getElementById('authButtons');
             const userInfo = document.getElementById('userInfo');
             const welcomeText = document.getElementById('welcomeUserName');
-            const addLessonSection = document.getElementById('addLessonSection');
-            const teacherSection = document.getElementById('teacherSection');
-
             const isTeacher = isTeacherUser();
 
-            // Hiển thị / Ẩn các khu vực quyền hạn Giáo viên
-            if (addLessonSection) {
-                if (isTeacher) addLessonSection.classList.remove('hidden');
-                else addLessonSection.classList.add('hidden');
-            }
-
-            if (teacherSection) {
-                if (isTeacher) teacherSection.classList.remove('hidden');
-                else teacherSection.classList.add('hidden');
-            }
+            document.getElementById('addLessonSection')?.classList.toggle('hidden', !isTeacher);
+            document.getElementById('teacherSection')?.classList.toggle('hidden', !isTeacher);
 
             if (savedUser) {
-                if (authButtons) authButtons.classList.add('hidden');
-                if (userInfo) userInfo.classList.remove('hidden');
-
+                authButtons?.classList.add('hidden');
+                userInfo?.classList.remove('hidden');
                 const nameDisp = document.getElementById('userNameDisplay');
                 const avatar = document.getElementById('userAvatar');
                 if (nameDisp) nameDisp.innerText = savedUser.name + (isTeacher ? ' (GV)' : '');
                 if (avatar) avatar.innerText = savedUser.name.charAt(0).toUpperCase();
-
-                if (welcomeText) {
-                    welcomeText.innerHTML = `<strong>Chào ${savedUser.name}!</strong> ${isTeacher ? 'Bạn đang đăng nhập với quyền Giáo viên.' : 'Tiến độ học tập của bạn đang được ghi nhận tự động.'}`;
-                }
+                if (welcomeText) welcomeText.innerHTML = `<strong>Chào ${savedUser.name}!</strong> ${isTeacher ? 'Đang ở quyền Giáo viên.' : 'Tiến độ của bạn đang được ghi nhận.'}`;
             } else {
-                if (authButtons) authButtons.classList.remove('hidden');
-                if (userInfo) userInfo.classList.add('hidden');
-                if (welcomeText) {
-                    welcomeText.innerText = "Chào bạn! Hãy đăng nhập để lưu giữ tiến độ bài học.";
-                }
+                authButtons?.classList.remove('hidden');
+                userInfo?.classList.add('hidden');
+                if (welcomeText) welcomeText.innerText = "Chào bạn! Hãy đăng nhập để lưu tiến độ.";
             }
-
             renderPlaylist();
             renderProgressUI();
         }
@@ -1034,66 +1257,41 @@
             }
         }
 
-        // TRẮC NGHIỆM
-        let quizzesStore = JSON.parse(localStorage.getItem('eduMathQuizzes')) || {
-            math12: [],
-            math11: [],
-            math10: []
-        };
-
-        // Lắng nghe Firebase Realtime Trắc nghiệm
-        if (db) {
-            db.ref('quizzes').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    quizzesStore = data;
-                    localStorage.setItem('eduMathQuizzes', JSON.stringify(data));
-                    if (typeof renderQuizzesForCourse === 'function') {
-                        renderQuizzesForCourse(currentCourseKey);
-                    }
-                }
-            });
-        }
-
         function renderQuizzesForCourse(courseKey) {
             const quizListContent = document.getElementById('quizListContent');
             const submitSection = document.getElementById('submitQuizSection');
-
             if (!quizListContent) return;
 
             const courseQuizzes = quizzesStore[courseKey] || [];
-
             if (courseQuizzes.length === 0) {
-                quizListContent.innerHTML = `<p class="text-sm text-slate-500 italic">Chưa có câu hỏi trắc nghiệm nào cho khóa học này.</p>`;
-                if (submitSection) submitSection.classList.add('hidden');
+                quizListContent.innerHTML = `<p class="text-sm text-slate-500 italic">Chưa có câu hỏi trắc nghiệm nào.</p>`;
+                submitSection?.classList.add('hidden');
                 return;
             }
 
             let html = '';
             courseQuizzes.forEach((q, index) => {
                 html += `
-            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-                <p class="font-semibold text-slate-800">Câu ${index + 1}: ${q.question}</p>
-                <div class="space-y-2 text-sm text-slate-700">
-                    <label class="flex items-center gap-2 cursor-pointer hover:text-purple-600">
-                        <input type="radio" name="question_${q.id}" value="A" class="text-purple-600"> A. ${q.optA}
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:text-purple-600">
-                        <input type="radio" name="question_${q.id}" value="B" class="text-purple-600"> B. ${q.optB}
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:text-purple-600">
-                        <input type="radio" name="question_${q.id}" value="C" class="text-purple-600"> C. ${q.optC}
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:text-purple-600">
-                        <input type="radio" name="question_${q.id}" value="D" class="text-purple-600"> D. ${q.optD}
-                    </label>
-                </div>
-            </div>
-        `;
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    <p class="font-bold text-slate-900">Câu ${index + 1}: ${q.question}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
+                            <input type="radio" name="question_${q.id}" value="A" class="text-blue-600"> A. ${q.optA}
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
+                            <input type="radio" name="question_${q.id}" value="B" class="text-blue-600"> B. ${q.optB}
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
+                            <input type="radio" name="question_${q.id}" value="C" class="text-blue-600"> C. ${q.optC}
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-blue-300 cursor-pointer">
+                            <input type="radio" name="question_${q.id}" value="D" class="text-blue-600"> D. ${q.optD}
+                        </label>
+                    </div>
+                </div>`;
             });
-
             quizListContent.innerHTML = html;
-            if (submitSection) submitSection.classList.remove('hidden');
+            submitSection?.classList.remove('hidden');
         }
 
         function submitQuizAnswers() {
@@ -1102,75 +1300,48 @@
 
             let score = 0;
             let answeredCount = 0;
-
             courseQuizzes.forEach(q => {
                 const selectedOpt = document.querySelector(`input[name="question_${q.id}"]:checked`);
                 if (selectedOpt) {
                     answeredCount++;
-                    if (selectedOpt.value === q.correctOpt) {
-                        score++;
-                    }
+                    if (selectedOpt.value === q.correctOpt) score++;
                 }
             });
 
             if (answeredCount === 0) {
-                showToast("⚠️ Vui lòng trả lời ít nhất một câu hỏi trước khi nộp bài!");
+                showToast("⚠️ Vui lòng trả lời ít nhất một câu hỏi!");
                 return;
             }
-
             showToast(`🎉 Bạn đã trả lời đúng ${score}/${courseQuizzes.length} câu hỏi!`);
+            addProgress(currentCourseKey, 25);
         }
 
         function openCreateQuizModal() {
-            if (!isTeacherUser()) {
-                alert("⛔ Tài khoản Học sinh không có quyền thêm câu hỏi trắc nghiệm!");
-                return;
-            }
-            const modal = document.getElementById('createQuizModal');
-            if (modal) modal.classList.remove('hidden');
+            if (!isTeacherUser()) { alert("⛔ Chỉ Giáo viên mới được thêm câu hỏi!"); return; }
+            document.getElementById('createQuizModal')?.classList.remove('hidden');
         }
-
-        function closeCreateQuizModal() {
-            const modal = document.getElementById('createQuizModal');
-            if (modal) modal.classList.add('hidden');
-        }
+        function closeCreateQuizModal() { document.getElementById('createQuizModal')?.classList.add('hidden'); }
 
         function saveNewQuiz() {
-            if (!isTeacherUser()) {
-                alert("⛔ Bạn không có quyền thực hiện thao tác này!");
-                return;
-            }
-
+            if (!isTeacherUser()) return;
             const qText = document.getElementById('newQuestionText').value.trim();
             const optA = document.getElementById('newOptA').value.trim();
             const optB = document.getElementById('newOptB').value.trim();
             const optC = document.getElementById('newOptC').value.trim();
             const optD = document.getElementById('newOptD').value.trim();
-            const correct = document.getElementById('newCorrectOpt').value;
+            const correctOpt = document.getElementById('newCorrectOpt').value;
 
             if (!qText || !optA || !optB || !optC || !optD) {
-                alert("Vui lòng điền đầy đủ thông tin!");
+                alert("Vui lòng điền đủ nội dung các đáp án!");
                 return;
             }
 
-            if (!quizzesStore[currentCourseKey]) {
-                quizzesStore[currentCourseKey] = [];
-            }
-
-            quizzesStore[currentCourseKey].push({
-                id: Date.now(),
-                question: qText,
-                optA: optA,
-                optB: optB,
-                optC: optC,
-                optD: optD,
-                correctOpt: correct
-            });
+            if (!quizzesStore[currentCourseKey]) quizzesStore[currentCourseKey] = [];
+            quizzesStore[currentCourseKey].push({ id: Date.now(), question: qText, optA, optB, optC, optD, correctOpt });
 
             localStorage.setItem('eduMathQuizzes', JSON.stringify(quizzesStore));
-            if (db) db.ref('quizzes').set(quizzesStore).catch(err => console.log(err));
+            if (db) db.ref('quizzes').set(quizzesStore);
 
-            // Reset form
             document.getElementById('newQuestionText').value = '';
             document.getElementById('newOptA').value = '';
             document.getElementById('newOptB').value = '';
@@ -1181,6 +1352,118 @@
             renderQuizzesForCourse(currentCourseKey);
             showToast("🎉 Đã thêm câu hỏi thành công!");
         }
+
+        // =========================================================
+        // TRỢ LÝ AI (KẾT NỐI GEMINI API)
+        // =========================================================
+        const GEMINI_API_KEY = "AQ.Ab8RN6IGQxM8JdvrjtxIFeIEYPGTOqQoCDEHKfxmACGRCBKS_w";
+        const GEMINI_MODEL = "gemini-3.8-flash";
+        const AI_SCOPE_INSTRUCTION = 'Bạn là trợ lý học tập môn Toán cho học sinh THPT Việt Nam. Giải thích rõ ràng, dễ hiểu, trình bày từng bước, hỗ trợ giải Toán VDC và hướng dẫn bấm máy tính Casio fx-580VN X.';
+        let aiChatHistory = [];
+
+        function getGeminiKey() {
+            return GEMINI_API_KEY.trim() || localStorage.getItem('eduLearnGeminiKey') || '';
+        }
+
+        function setGeminiKey() {
+            const current = getGeminiKey();
+            const key = prompt("Nhập hoặc cập nhật Gemini API Key của bạn:", current);
+            if (key !== null) {
+                localStorage.setItem('eduLearnGeminiKey', key.trim());
+                showToast(key.trim() ? "✅ Đã lưu Gemini API Key!" : "🗑️ Đã xóa API Key.");
+            }
+        }
+
+        function toggleAIChat(forceOpen) {
+            const panel = document.getElementById('aiChatPanel');
+            const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : panel?.classList.contains('hidden');
+            panel?.classList.toggle('hidden', !shouldOpen);
+            panel?.classList.toggle('flex', shouldOpen);
+            if (shouldOpen) setTimeout(() => document.getElementById('aiChatInput')?.focus(), 50);
+        }
+
+        function appendAIChatMessage(text, sender, isStatus = false) {
+            const list = document.getElementById('aiChatMessages');
+            if (!list) return null;
+            const row = document.createElement('div');
+            row.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-message max-w-[90%] rounded-2xl px-4 py-3 text-sm shadow-sm ${sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-md' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-md'} ${isStatus ? 'italic text-slate-500' : ''}`;
+            bubble.textContent = text;
+            row.appendChild(bubble);
+            list.appendChild(row);
+            list.scrollTop = list.scrollHeight;
+            return bubble;
+        }
+
+        async function sendAIChatMessage(event) {
+            event?.preventDefault();
+            const input = document.getElementById('aiChatInput');
+            const send = document.getElementById('aiChatSend');
+            const question = input?.value.trim();
+            if (!question || !send) return;
+
+            let apiKey = getGeminiKey();
+            if (!apiKey) {
+                setGeminiKey();
+                apiKey = getGeminiKey();
+                if (!apiKey) {
+                    appendAIChatMessage('⚠️ Em chưa cấu hình Gemini API Key!', 'assistant');
+                    return;
+                }
+            }
+
+            appendAIChatMessage(question, 'user');
+            input.value = '';
+            send.disabled = true;
+            const pending = appendAIChatMessage('Đang phân tích bài toán...', 'assistant', true);
+
+            try {
+                const courseName = coursesData[currentCourseKey]?.name || 'Toán THPT';
+                const contents = [
+                    ...aiChatHistory.slice(-8).map(m => ({
+                        role: m.role === 'user' ? 'user' : 'model',
+                        parts: [{ text: m.content }]
+                    })),
+                    {
+                        role: 'user',
+                        parts: [{ text: `[Môn học hiện tại: ${courseName}]\n${question}` }]
+                    }
+                ];
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: AI_SCOPE_INSTRUCTION }] },
+                        contents: contents
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error?.message || `Lỗi API (${response.status})`);
+                }
+
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Thầy/cô chưa nhận được nội dung phản hồi, em thử hỏi lại nhé.';
+                pending?.parentElement?.remove();
+                appendAIChatMessage(reply, 'assistant');
+                aiChatHistory.push({ role: 'user', content: question }, { role: 'assistant', content: reply });
+            } catch (error) {
+                pending?.parentElement?.remove();
+                appendAIChatMessage(`❌ Lỗi kết nối AI: ${error.message}. Em kiểm tra lại API Key hoặc mạng Internet nhé!`, 'assistant');
+            } finally {
+                send.disabled = false;
+                input?.focus();
+            }
+        }
+
+        document.getElementById('aiChatInput')?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById('aiChatForm')?.requestSubmit();
+            }
+        });
     </script>
 
 </body>
