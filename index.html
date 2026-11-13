@@ -20,6 +20,10 @@
         }
         .chat-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
         .chat-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .countdown-unit { display:flex; align-items:baseline; gap:.25rem; padding:.45rem .85rem; border:3px solid #e0f2fe; background:#f8fcff; border-radius:1rem; color:#0284c7; min-width:88px; justify-content:center; }
+        .countdown-unit strong { font-size:1.5rem; line-height:1; font-weight:800; font-variant-numeric:tabular-nums; }
+        .countdown-unit span { font-size:.8rem; }
+        @media (max-width:480px) { .countdown-unit { min-width:72px; padding:.4rem .55rem; } .countdown-unit strong { font-size:1.2rem; } }
         
         .casio-btn { 
             background: #1e293b; color: #ffffff; font-weight: 700; padding: 0.3rem 0.2rem; border-radius: 0.4rem; font-size: 0.7rem; line-height: 1.1; transition: all 0.12s; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; user-select: none;
@@ -32,6 +36,8 @@
 
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <!-- Thư viện Firebase SDK cho HTML thuần -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -76,6 +82,9 @@
                     <button onclick="openCoursePage('math12')" class="hover:text-blue-600 transition">Toán 12</button>
                     <button onclick="openGlobalChatRoom()" class="hover:text-emerald-600 font-bold transition flex items-center gap-1.5">
                         <i class="fa-solid fa-comments"></i> Phòng Chat Học Viên
+                    </button>
+                    <button type="button" onclick="openGraphModal()" class="hover:text-violet-600 font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line"></i> Vẽ đồ thị
                     </button>
                 </nav>
             </div>
@@ -197,6 +206,29 @@
                             Chào bạn! Hãy đăng nhập để lưu giữ tiến độ bài học.
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bộ đếm ngược sự kiện / mục tiêu học tập -->
+        <section class="mb-14">
+            <div class="bg-white rounded-[2.5rem] border border-blue-100 shadow-sm px-5 sm:px-10 py-7 sm:py-8 text-center">
+                <p class="text-sm sm:text-lg md:text-xl font-semibold text-blue-900 leading-relaxed uppercase">
+                    HỌC TẬP MỖI NGÀY – CHINH PHỤC MỤC TIÊU CỦA BẠN
+                </p>
+                <p class="text-xs text-slate-500 mt-2">Cùng đếm ngược đến ngày quan trọng tiếp theo</p>
+                <div class="flex justify-center items-center flex-wrap gap-2 sm:gap-3 mt-5" id="countdownDisplay" aria-live="polite">
+                    <div class="countdown-unit"><strong id="countDays">--</strong><span>ngày</span></div>
+                    <div class="countdown-unit"><strong id="countHours">--</strong><span>giờ</span></div>
+                    <div class="countdown-unit"><strong id="countMinutes">--</strong><span>phút</span></div>
+                    <div class="countdown-unit"><strong id="countSeconds">--</strong><span>giây</span></div>
+                </div>
+                <div class="mt-5 flex flex-wrap justify-center items-center gap-2 text-xs sm:text-sm text-slate-500">
+                    <label for="countdownTarget" class="font-semibold">Ngày mục tiêu:</label>
+                    <input id="countdownTarget" type="datetime-local" class="px-3 py-2 rounded-xl border border-blue-100 bg-blue-50 text-slate-700 outline-none focus:border-blue-400">
+                    <button type="button" onclick="saveCountdownTarget()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu ngày
+                    </button>
                 </div>
             </div>
         </section>
@@ -550,7 +582,7 @@
 
     <!-- Trợ lý học tập AI -->
     <div id="aiChatWidget" class="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3">
-        <section id="aiChatPanel" class="hidden w-[min(92vw,390px)] h-[min(70vh,590px)] bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex-col" aria-label="Trợ lý học tập AI">
+        <section id="aiChatPanel" class="hidden w-[min(88vw,330px)] h-[min(58vh,430px)] bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden flex-col" aria-label="Trợ lý học tập AI">
             <div class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white px-5 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center"><i class="fa-solid fa-graduation-cap"></i></div>
@@ -561,20 +593,114 @@
                     <button type="button" onclick="toggleAIChat(false)" aria-label="Đóng chat" class="w-8 h-8 rounded-xl hover:bg-white/15 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
-            <div id="aiChatMessages" class="chat-scroll flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50" aria-live="polite">
+            <div id="aiChatMessages" class="chat-scroll flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50" aria-live="polite">
                 <div class="flex justify-start"><div class="chat-message max-w-[88%] bg-white border border-slate-200 rounded-2xl rounded-tl-md px-4 py-3 text-sm text-slate-700 shadow-sm">Chào em! Thầy/cô có thể giúp em giải thích bài toán mở rộng hoặc hướng dẫn bấm máy Casio. Em cần hỏi gì nào?</div></div>
             </div>
-            <form id="aiChatForm" class="p-3 border-t border-slate-200 bg-white" onsubmit="sendAIChatMessage(event)">
+            <form id="aiChatForm" class="p-2 border-t border-slate-200 bg-white" onsubmit="sendAIChatMessage(event)">
                 <div class="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100">
                     <textarea id="aiChatInput" rows="1" maxlength="1500" aria-label="Nhập câu hỏi" placeholder="Nhập câu hỏi bài tập Toán..." class="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none max-h-28" required></textarea>
                     <button id="aiChatSend" type="submit" aria-label="Gửi câu hỏi" class="w-10 h-10 shrink-0 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </form>
         </section>
-        <button id="aiChatToggle" type="button" onclick="toggleAIChat()" aria-label="Mở trợ lý học tập AI" aria-expanded="false" class="flex items-center gap-2 rounded-full bg-indigo-600 text-white px-5 py-3.5 font-semibold shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-0.5 transition">
+        <button id="aiChatToggle" type="button" onclick="toggleAIChat()" aria-label="Mở trợ lý học tập AI" aria-expanded="false" class="flex items-center gap-2 rounded-full bg-indigo-600 text-white px-4 py-2.5 text-sm font-semibold shadow-xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-0.5 transition">
             <i class="fa-solid fa-comments text-lg"></i><span>Hỏi trợ lý AI</span>
         </button>
     </div>
+
+    <!-- MODAL VẼ ĐỒ THỊ: GIAO DIỆN KIỂU DESMOS + BÀN PHÍM TOÁN HỌC -->
+    <div id="graphModal" class="fixed inset-0 z-[85] hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-2 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="graphModalTitle">
+        <div class="bg-white w-full max-w-[1500px] h-[96vh] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between px-4 sm:px-5 py-3 bg-gradient-to-r from-violet-700 to-indigo-700 text-white shrink-0">
+                <div><h3 id="graphModalTitle" class="font-bold text-lg"><i class="fa-solid fa-chart-line mr-2"></i>Đồ thị hàm số</h3><p class="text-xs text-violet-100">Nhập phương trình hoặc dùng bàn phím toán học bên dưới</p></div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="toggleCasioWidget(true)" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm"><i class="fa-solid fa-calculator"></i> Máy tính Casio</button>
+                    <button type="button" onclick="closeGraphModal()" class="w-9 h-9 rounded-xl hover:bg-white/15" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[330px_minmax(0,1fr)]">
+                <aside class="border-r border-slate-200 bg-slate-50 flex flex-col min-h-0 overflow-y-auto">
+                    <div class="p-3 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-slate-50 z-10">
+                        <div><h4 class="font-bold text-slate-800 text-sm">Phương trình</h4><p class="text-[11px] text-slate-500">Mỗi dòng là một đồ thị</p></div>
+                        <button type="button" onclick="addGraphExpression()" class="px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700"><i class="fa-solid fa-plus mr-1"></i>Thêm dòng</button>
+                    </div>
+                    <div id="graphExpressionList" class="p-3 space-y-2">
+                        <div class="graph-expression-row flex items-center gap-2 bg-white border border-violet-200 rounded-xl p-2 shadow-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-violet-600 shrink-0"></span>
+                            <span class="text-xs font-bold text-slate-500">y =</span>
+                            <input class="graph-expression-input min-w-0 flex-1 outline-none text-sm font-medium text-slate-800" value="x^2" aria-label="Phương trình 1" onkeydown="if(event.key==='Enter')drawFunctionGraph()">
+                            <button type="button" onclick="removeGraphExpression(this)" class="text-slate-400 hover:text-rose-600 px-1" title="Xóa dòng"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="px-3 pb-2 pt-1 flex items-center justify-between gap-2">
+                        <span class="text-xs font-semibold text-slate-600">Bàn phím toán học</span>
+                        <button type="button" onclick="clearGraphInput()" class="text-[11px] text-rose-600 hover:underline">Xóa ô đang chọn</button>
+                    </div>
+                    <div class="px-3 pb-3">
+                        <div class="grid grid-cols-5 gap-1.5" id="graphMathKeyboard">
+                            <button type="button" onclick="insertGraphKey('x')" class="graph-key">x</button>
+                            <button type="button" onclick="insertGraphKey('y')" class="graph-key">y</button>
+                            <button type="button" onclick="insertGraphKey('pi')" class="graph-key">π</button>
+                            <button type="button" onclick="insertGraphKey('e')" class="graph-key">e</button>
+                            <button type="button" onclick="insertGraphKey('^2')" class="graph-key">x²</button>
+                            <button type="button" onclick="insertGraphKey('sin(')" class="graph-key">sin</button>
+                            <button type="button" onclick="insertGraphKey('cos(')" class="graph-key">cos</button>
+                            <button type="button" onclick="insertGraphKey('tan(')" class="graph-key">tan</button>
+                            <button type="button" onclick="insertGraphKey('sqrt(')" class="graph-key">√</button>
+                            <button type="button" onclick="insertGraphKey('abs(')" class="graph-key">|x|</button>
+                            <button type="button" onclick="insertGraphKey('log(')" class="graph-key">log</button>
+                            <button type="button" onclick="insertGraphKey('ln(')" class="graph-key">ln</button>
+                            <button type="button" onclick="insertGraphKey('(')" class="graph-key">(</button>
+                            <button type="button" onclick="insertGraphKey(')')" class="graph-key">)</button>
+                            <button type="button" onclick="insertGraphKey('/')" class="graph-key">a/b</button>
+                            <button type="button" onclick="insertGraphKey('7')" class="graph-key">7</button>
+                            <button type="button" onclick="insertGraphKey('8')" class="graph-key">8</button>
+                            <button type="button" onclick="insertGraphKey('9')" class="graph-key">9</button>
+                            <button type="button" onclick="insertGraphKey('*')" class="graph-key">×</button>
+                            <button type="button" onclick="insertGraphKey('-')" class="graph-key">−</button>
+                            <button type="button" onclick="insertGraphKey('4')" class="graph-key">4</button>
+                            <button type="button" onclick="insertGraphKey('5')" class="graph-key">5</button>
+                            <button type="button" onclick="insertGraphKey('6')" class="graph-key">6</button>
+                            <button type="button" onclick="insertGraphKey('+')" class="graph-key">+</button>
+                            <button type="button" onclick="insertGraphKey('^')" class="graph-key">xʸ</button>
+                            <button type="button" onclick="insertGraphKey('1')" class="graph-key">1</button>
+                            <button type="button" onclick="insertGraphKey('2')" class="graph-key">2</button>
+                            <button type="button" onclick="insertGraphKey('3')" class="graph-key">3</button>
+                            <button type="button" onclick="insertGraphKey('.')" class="graph-key">.</button>
+                            <button type="button" onclick="graphBackspace()" class="graph-key graph-key-muted"><i class="fa-solid fa-delete-left"></i></button>
+                            <button type="button" onclick="insertGraphKey('0')" class="graph-key col-span-2">0</button>
+                            <button type="button" onclick="insertGraphKey(',')" class="graph-key">,</button>
+                            <button type="button" onclick="insertGraphKey('=')" class="graph-key">=</button>
+                            <button type="button" onclick="drawFunctionGraph()" class="graph-key graph-key-primary"><i class="fa-solid fa-check"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200 bg-white space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="text-[11px] text-slate-500">x nhỏ nhất<input id="graphXMin" type="number" value="-10" class="mt-1 w-full p-2 border rounded-lg text-sm text-slate-800"></label>
+                            <label class="text-[11px] text-slate-500">x lớn nhất<input id="graphXMax" type="number" value="10" class="mt-1 w-full p-2 border rounded-lg text-sm text-slate-800"></label>
+                            <label class="text-[11px] text-slate-500">y nhỏ nhất<input id="graphYMin" type="number" value="-10" class="mt-1 w-full p-2 border rounded-lg text-sm text-slate-800"></label>
+                            <label class="text-[11px] text-slate-500">y lớn nhất<input id="graphYMax" type="number" value="10" class="mt-1 w-full p-2 border rounded-lg text-sm text-slate-800"></label>
+                        </div>
+                        <button type="button" onclick="drawFunctionGraph()" class="w-full py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700"><i class="fa-solid fa-chart-line mr-2"></i>Vẽ / cập nhật đồ thị</button>
+                    </div>
+                </aside>
+                <section class="min-h-[360px] lg:min-h-0 p-2 sm:p-4 flex flex-col bg-white">
+                    <div class="flex items-center justify-between gap-2 px-1 pb-2 text-xs text-slate-500"><span><i class="fa-solid fa-hand-pointer mr-1"></i>Kéo để di chuyển · Cuộn để phóng to / thu nhỏ</span><button type="button" onclick="resetGraphView()" class="text-violet-700 font-semibold hover:underline">Đặt lại khung nhìn</button></div>
+                    <div id="functionGraph" class="w-full flex-1 min-h-[330px] lg:min-h-0 rounded-xl border border-slate-200 bg-white"></div>
+                    <p class="text-[10px] text-slate-400 pt-2">Hỗ trợ +, −, ×, ÷, lũy thừa ^, sin, cos, tan, sqrt, log, ln, abs. Góc lượng giác tính bằng radian.</p>
+                </section>
+            </div>
+        </div>
+    </div>
+    <style>
+      .graph-key{min-height:38px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#1e293b;font-size:14px;font-weight:650;box-shadow:0 1px 1px rgba(15,23,42,.04);transition:background .15s,border-color .15s}
+      .graph-key:hover{background:#eef2ff;border-color:#a5b4fc;color:#4338ca}
+      .graph-key:active{transform:translateY(1px);background:#e0e7ff}
+      .graph-key-muted{background:#e2e8f0;color:#334155}
+      .graph-key-primary{background:#4f46e5;color:white;border-color:#4f46e5}
+      .graph-key-primary:hover{background:#4338ca;color:white}
+      @media(max-width:1023px){#graphModal>div{height:96vh}#graphModal .grid-cols-1{overflow-y:auto}#graphModal aside{max-height:52vh}#functionGraph{height:48vh;flex:none}}
+    </style>
 
     <!-- MODAL CHÚC MỪNG KẾT QUẢ TRẮC NGHIỆM -->
     <div id="quizResultModal"
@@ -902,9 +1028,134 @@
             });
         }
 
+        // BỘ ĐẾM NGƯỢC: ngày đích được lưu riêng trên trình duyệt
+        function getCountdownTarget() {
+            return localStorage.getItem('eduLearnCountdownTarget') || '2027-06-30T00:00';
+        }
+        function updateCountdown() {
+            const targetInput = document.getElementById('countdownTarget');
+            if (!targetInput) return;
+            const target = new Date(targetInput.value || getCountdownTarget()).getTime();
+            const diff = target - Date.now();
+            const values = diff > 0 ? {
+                days: Math.floor(diff / 86400000),
+                hours: Math.floor(diff % 86400000 / 3600000),
+                minutes: Math.floor(diff % 3600000 / 60000),
+                seconds: Math.floor(diff % 60000 / 1000)
+            } : { days: 0, hours: 0, minutes: 0, seconds: 0 };
+            document.getElementById('countDays').textContent = values.days;
+            document.getElementById('countHours').textContent = String(values.hours).padStart(2, '0');
+            document.getElementById('countMinutes').textContent = String(values.minutes).padStart(2, '0');
+            document.getElementById('countSeconds').textContent = String(values.seconds).padStart(2, '0');
+        }
+        function saveCountdownTarget() {
+            const value = document.getElementById('countdownTarget')?.value;
+            if (!value || Number.isNaN(new Date(value).getTime())) {
+                showToast('⚠️ Vui lòng chọn ngày và giờ hợp lệ!');
+                return;
+            }
+            localStorage.setItem('eduLearnCountdownTarget', value);
+            updateCountdown();
+            showToast('Đã cập nhật ngày đếm ngược!');
+        }
+
+        // VẼ ĐỒ THỊ HÀM SỐ - HỖ TRỢ NHIỀU PHƯƠNG TRÌNH VÀ BÀN PHÍM ẢO
+        let activeGraphInput = null;
+        const graphColors = ['#4f46e5', '#e11d48', '#059669', '#d97706', '#0284c7', '#9333ea'];
+        function openGraphModal() {
+            const modal = document.getElementById('graphModal');
+            modal?.classList.remove('hidden'); modal?.classList.add('flex');
+            const firstInput = document.querySelector('.graph-expression-input');
+            if (firstInput) activeGraphInput = firstInput;
+            setTimeout(drawFunctionGraph, 120);
+        }
+        function closeGraphModal() {
+            const modal = document.getElementById('graphModal');
+            modal?.classList.add('hidden'); modal?.classList.remove('flex');
+        }
+        function addGraphExpression(value = '') {
+            const list = document.getElementById('graphExpressionList');
+            if (!list) return;
+            const row = document.createElement('div');
+            row.className = 'graph-expression-row flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2 shadow-sm';
+            const color = graphColors[list.querySelectorAll('.graph-expression-row').length % graphColors.length];
+            row.innerHTML = `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${color}"></span><span class="text-xs font-bold text-slate-500">y =</span><input class="graph-expression-input min-w-0 flex-1 outline-none text-sm font-medium text-slate-800" aria-label="Phương trình" placeholder="Ví dụ: sin(x)" onkeydown="if(event.key==='Enter')drawFunctionGraph()"><button type="button" onclick="removeGraphExpression(this)" class="text-slate-400 hover:text-rose-600 px-1" title="Xóa dòng"><i class="fa-solid fa-xmark"></i></button>`;
+            list.appendChild(row);
+            const input = row.querySelector('input'); input.value = value; input.focus(); activeGraphInput = input;
+        }
+        function removeGraphExpression(button) {
+            const list = document.getElementById('graphExpressionList');
+            const rows = list?.querySelectorAll('.graph-expression-row') || [];
+            if (rows.length <= 1) { const input = rows[0]?.querySelector('input'); if (input) input.value = ''; return; }
+            const row = button.closest('.graph-expression-row');
+            const next = row?.nextElementSibling?.querySelector('input') || row?.previousElementSibling?.querySelector('input');
+            row?.remove(); if (next) activeGraphInput = next;
+            drawFunctionGraph();
+        }
+        document.addEventListener('focusin', e => { if (e.target.matches?.('.graph-expression-input')) activeGraphInput = e.target; });
+        function insertGraphKey(token) {
+            let input = activeGraphInput;
+            if (!input || !input.isConnected) input = document.querySelector('.graph-expression-input');
+            if (!input) return;
+            input.focus();
+            const start = input.selectionStart ?? input.value.length, end = input.selectionEnd ?? start;
+            const insertion = token === 'pi' ? 'pi' : token;
+            input.setRangeText(insertion, start, end, 'end');
+            activeGraphInput = input;
+        }
+        function clearGraphInput() { const input = activeGraphInput; if (input) { input.value = ''; input.focus(); } }
+        function graphBackspace() {
+            const input = activeGraphInput; if (!input) return; input.focus();
+            const a = input.selectionStart ?? input.value.length, b = input.selectionEnd ?? a;
+            if (a === b && a > 0) input.setRangeText('', a - 1, a, 'end'); else input.setRangeText('', a, b, 'end');
+        }
+        function resetGraphView() {
+            const xMin = Number(document.getElementById('graphXMin')?.value), xMax = Number(document.getElementById('graphXMax')?.value);
+            const yMin = Number(document.getElementById('graphYMin')?.value), yMax = Number(document.getElementById('graphYMax')?.value);
+            const plot = document.getElementById('functionGraph');
+            if (plot && plot.data && typeof Plotly !== 'undefined') Plotly.relayout(plot, {'xaxis.range':[xMin,xMax], 'yaxis.range':[yMin,yMax], 'xaxis.autorange':false, 'yaxis.autorange':false});
+        }
+        function drawFunctionGraph() {
+            const xMin = Number(document.getElementById('graphXMin')?.value), xMax = Number(document.getElementById('graphXMax')?.value);
+            const yMin = Number(document.getElementById('graphYMin')?.value), yMax = Number(document.getElementById('graphYMax')?.value);
+            const plot = document.getElementById('functionGraph');
+            if (!plot) return;
+            if (![xMin,xMax,yMin,yMax].every(Number.isFinite) || xMin >= xMax || yMin >= yMax) { showToast('⚠️ Khoảng giá trị đồ thị không hợp lệ!'); return; }
+            if (typeof math === 'undefined' || typeof Plotly === 'undefined') { plot.innerHTML = '<p class="p-5 text-rose-600 text-sm">Không tải được thư viện vẽ đồ thị. Hãy kiểm tra kết nối Internet.</p>'; return; }
+            const inputs = [...document.querySelectorAll('.graph-expression-input')];
+            const traces = [];
+            try {
+                inputs.forEach((input, index) => {
+                    let expression = input.value.trim(); if (!expression) return;
+                    expression = expression.replace(/^y\s*=\s*/i, '').replace(/^f\(x\)\s*=\s*/i, '');
+                    const compiled = math.compile(expression), xs = [], ys = [], count = 1000;
+                    for (let i = 0; i <= count; i++) {
+                        const x = xMin + (xMax - xMin) * i / count;
+                        let y = compiled.evaluate({x});
+                        if (typeof y !== 'number' || !Number.isFinite(y) || Math.abs(y) > 1e8) y = null;
+                        xs.push(x); ys.push(y);
+                    }
+                    traces.push({x:xs,y:ys,type:'scatter',mode:'lines',name:'y = '+expression,line:{width:3,color:graphColors[index % graphColors.length]},connectgaps:false});
+                });
+                if (!traces.length) { showToast('Nhập ít nhất một phương trình nhé!'); return; }
+                Plotly.react(plot, traces, {
+                    autosize:true, margin:{l:58,r:22,t:18,b:48},
+                    paper_bgcolor:'#ffffff',plot_bgcolor:'#ffffff',
+                    font:{family:'Inter, Arial, sans-serif',color:'#334155',size:13},
+                    xaxis:{title:{text:'x',font:{size:14}},range:[xMin,xMax],dtick:1,gridcolor:'#cbd5e1',gridwidth:1,zeroline:true,zerolinecolor:'#334155',zerolinewidth:2,showline:true,linecolor:'#94a3b8',mirror:true,ticks:'outside',showspikes:true},
+                    yaxis:{title:{text:'y',font:{size:14}},range:[yMin,yMax],dtick:1,gridcolor:'#cbd5e1',gridwidth:1,zeroline:true,zerolinecolor:'#334155',zerolinewidth:2,showline:true,linecolor:'#94a3b8',mirror:true,ticks:'outside',scaleanchor:undefined},
+                    showlegend:traces.length>1,legend:{orientation:'h',y:1.08,x:0,font:{size:12}},hovermode:'x unified'
+                }, {responsive:true,displaylogo:false,scrollZoom:true,modeBarButtonsToRemove:['lasso2d','select2d'],toImageButtonOptions:{format:'png',filename:'edulearn-do-thi',scale:2}});
+            } catch (error) { showToast('⚠️ Phương trình chưa hợp lệ. Kiểm tra lại cách nhập!'); }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             checkUserState();
             initCasioDraggable();
+            const countdownInput = document.getElementById('countdownTarget');
+            if (countdownInput) countdownInput.value = getCountdownTarget();
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
         });
 
         function isTeacherUser() {
