@@ -22,10 +22,11 @@
         .chat-message { white-space: pre-wrap; overflow-wrap: anywhere; }
         
         .casio-btn { 
-            background: #1e293b; color: #ffffff; font-weight: bold; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; transition: all 0.15s; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; user-select: none;
+            background: #1e293b; color: #ffffff; font-weight: 700; padding: 0.3rem 0.2rem; border-radius: 0.4rem; font-size: 0.7rem; line-height: 1.1; transition: all 0.12s; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; user-select: none;
         }
         .casio-btn:hover { background: #334155; }
-        .casio-op { background: rgba(51, 65, 85, 0.8); color: #67e8f9; border-color: #475569; }
+        .casio-btn:active { transform: scale(0.95); }
+        .casio-op { background: rgba(51, 65, 85, 0.85); color: #67e8f9; border-color: #475569; }
         .casio-action { background: rgba(225, 29, 72, 0.9); color: white; border-color: #f43f5e; }
         .casio-equal { background: #059669; color: white; border-color: #10b981; }
 
@@ -93,10 +94,10 @@
                 </div>
 
                 <div id="userInfo" class="hidden flex items-center gap-3 border-l border-slate-200 pl-4">
-                    <div id="userAvatar"
-                        class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                    <button id="userAvatar" type="button" onclick="openAccountModal()" aria-label="Mở quản lý tài khoản" title="Quản lý tài khoản"
+                        class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md overflow-hidden ring-2 ring-transparent hover:ring-blue-300 transition">
                         U
-                    </div>
+                    </button>
                     <span id="userNameDisplay" class="text-sm font-semibold text-slate-800 hidden lg:inline">Học Viên</span>
                     <button onclick="handleLogout()" title="Đăng xuất"
                         class="p-2 text-slate-400 hover:text-red-600 transition rounded-lg hover:bg-slate-100">
@@ -441,67 +442,95 @@
         </div>
     </main>
 
-    <!-- CỬA SỔ NỔI MÁY TÍNH CASIO TRỰC TUYẾN -->
-    <div id="casioWidget" class="fixed bottom-5 left-5 z-[55] hidden w-[285px] sm:w-[300px] bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden transition-all duration-200">
-        <div id="casioDragHeader" class="flex items-center justify-between bg-slate-800/90 px-3.5 py-2.5 border-b border-slate-700 cursor-move select-none">
-            <div class="flex items-center gap-2 pointer-events-none">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                <span class="font-bold text-xs tracking-wide text-slate-200">CASIO fx-580VN X</span>
+    <!-- MÁY TÍNH KHOA HỌC EDULEARN (PHIÊN BẢN NHỎ GỌN + KÉO THẢ MƯỢT) -->
+    <div id="casioWidget" class="fixed bottom-5 left-5 z-[55] hidden w-[265px] sm:w-[275px] bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+        <!-- Thanh tiêu đề dùng để nắm kéo thả -->
+        <div id="casioDragHeader" title="Nhấn giữ và kéo để di chuyển máy tính" class="flex items-center justify-between bg-slate-800 hover:bg-slate-750 px-2.5 py-1.5 border-b border-slate-700 cursor-grab active:cursor-grabbing select-none">
+            <div class="flex items-center gap-1.5 pointer-events-none">
+                <i class="fa-solid fa-grip-vertical text-slate-400 text-[10px]"></i>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                <span class="font-bold text-[10px] tracking-wide text-slate-200">CASIO • KHOA HỌC</span>
             </div>
             <div class="flex items-center gap-1">
-                <button type="button" onclick="toggleCasioMinimize()" id="casioMinBtn" title="Thu nhỏ / Mở rộng"
-                    class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200 transition text-xs">
-                    <i id="casioMinIcon" class="fa-solid fa-minus"></i>
-                </button>
-                <button type="button" onclick="toggleCasioWidget(false)" title="Đóng máy tính"
-                    class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-rose-600 flex items-center justify-center text-slate-200 hover:text-white transition text-xs">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <button type="button" onclick="toggleCasioMinimize()" id="casioMinBtn" title="Thu nhỏ / Mở rộng" class="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200 text-[10px]"><i id="casioMinIcon" class="fa-solid fa-minus"></i></button>
+                <button type="button" onclick="toggleCasioWidget(false)" title="Đóng máy tính" class="w-6 h-6 rounded-md bg-slate-700 hover:bg-rose-600 flex items-center justify-center text-slate-200 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
 
-        <div id="casioBody" class="p-3 space-y-2.5">
-            <div class="bg-emerald-950/90 border border-emerald-800/70 rounded-xl px-3 py-2 space-y-0.5 font-mono shadow-inner">
-                <div id="casioExpression" class="text-[11px] text-emerald-400/90 min-h-[16px] text-right truncate">0</div>
-                <div id="casioResult" class="text-xl font-bold text-emerald-200 text-right truncate">0</div>
+        <div id="casioBody" class="p-2 space-y-1.5">
+            <!-- Màn hình hiển thị thu gọn -->
+            <div class="bg-emerald-950 border border-emerald-800 rounded-xl px-2.5 py-1.5 font-mono shadow-inner">
+                <div class="flex justify-between items-center text-[9px] text-emerald-400">
+                    <span id="casioModeLabel">DEG</span><span id="casioMemoryLabel">Ans = 0</span>
+                </div>
+                <div id="casioExpression" class="text-[11px] text-emerald-300 min-h-[16px] text-right break-all leading-tight">0</div>
+                <div id="casioResult" class="text-lg font-bold text-emerald-100 text-right truncate leading-snug">0</div>
             </div>
 
-            <div class="grid grid-cols-5 gap-1.5">
+            <!-- Bàn phím giữ nguyên 100% chức năng -->
+            <div class="grid grid-cols-5 gap-1">
+                <button type="button" onclick="casioToggleAngle()" id="casioAngleBtn" class="casio-btn casio-op">DEG</button>
+                <button type="button" onclick="casioInput('Math.PI')" class="casio-btn casio-op">π</button>
+                <button type="button" onclick="casioInput('Math.E')" class="casio-btn casio-op">e</button>
+                <button type="button" onclick="casioInput('(')" class="casio-btn casio-op">(</button>
+                <button type="button" onclick="casioInput(')')" class="casio-btn casio-op">)</button>
+
                 <button type="button" onclick="casioInput('Math.sin(')" class="casio-btn casio-op">sin</button>
                 <button type="button" onclick="casioInput('Math.cos(')" class="casio-btn casio-op">cos</button>
                 <button type="button" onclick="casioInput('Math.tan(')" class="casio-btn casio-op">tan</button>
-                <button type="button" onclick="casioClear()" class="casio-btn casio-action">AC</button>
-                <button type="button" onclick="casioBackspace()" class="casio-btn casio-action"><i class="fa-solid fa-delete-left"></i></button>
+                <button type="button" onclick="casioInput('Math.asin(')" class="casio-btn casio-op">sin⁻¹</button>
+                <button type="button" onclick="casioInput('Math.acos(')" class="casio-btn casio-op">cos⁻¹</button>
 
+                <button type="button" onclick="casioInput('Math.atan(')" class="casio-btn casio-op">tan⁻¹</button>
                 <button type="button" onclick="casioInput('Math.sqrt(')" class="casio-btn casio-op">√</button>
+                <button type="button" onclick="casioInput('Math.abs(')" class="casio-btn casio-op">|x|</button>
+                <button type="button" onclick="casioInput('Math.log10(')" class="casio-btn casio-op">log</button>
+                <button type="button" onclick="casioInput('Math.log(')" class="casio-btn casio-op">ln</button>
+
                 <button type="button" onclick="casioInput('**2')" class="casio-btn casio-op">x²</button>
-                <button type="button" onclick="casioInput('**')" class="casio-btn casio-op">x^y</button>
-                <button type="button" onclick="casioInput('(')" class="casio-btn casio-op">(</button>
-                <button type="button" onclick="casioInput(')')" class="casio-btn casio-op">)</button>
+                <button type="button" onclick="casioInput('**3')" class="casio-btn casio-op">x³</button>
+                <button type="button" onclick="casioInput('**')" class="casio-btn casio-op">xʸ</button>
+                <button type="button" onclick="casioInput('1/(')" class="casio-btn casio-op">1/x</button>
+                <button type="button" onclick="casioInput('/100')" class="casio-btn casio-op">%</button>
+
+                <button type="button" onclick="casioInput('Math.floor(')" class="casio-btn casio-op">⌊x⌋</button>
+                <button type="button" onclick="casioInput('Math.ceil(')" class="casio-btn casio-op">⌈x⌉</button>
+                <button type="button" onclick="casioInput('Math.round(')" class="casio-btn casio-op">round</button>
+                <button type="button" onclick="casioInput('Math.exp(')" class="casio-btn casio-op">eˣ</button>
+                <button type="button" onclick="casioInput('10**')" class="casio-btn casio-op">10ˣ</button>
 
                 <button type="button" onclick="casioInput('7')" class="casio-btn">7</button>
                 <button type="button" onclick="casioInput('8')" class="casio-btn">8</button>
                 <button type="button" onclick="casioInput('9')" class="casio-btn">9</button>
                 <button type="button" onclick="casioInput('/')" class="casio-btn casio-op">÷</button>
-                <button type="button" onclick="casioInput('Math.log10(')" class="casio-btn casio-op">log</button>
+                <button type="button" onclick="casioBackspace()" class="casio-btn casio-action">DEL</button>
 
                 <button type="button" onclick="casioInput('4')" class="casio-btn">4</button>
                 <button type="button" onclick="casioInput('5')" class="casio-btn">5</button>
                 <button type="button" onclick="casioInput('6')" class="casio-btn">6</button>
                 <button type="button" onclick="casioInput('*')" class="casio-btn casio-op">×</button>
-                <button type="button" onclick="casioInput('Math.log(')" class="casio-btn casio-op">ln</button>
+                <button type="button" onclick="casioInput('-')" class="casio-btn casio-op">−</button>
 
                 <button type="button" onclick="casioInput('1')" class="casio-btn">1</button>
                 <button type="button" onclick="casioInput('2')" class="casio-btn">2</button>
                 <button type="button" onclick="casioInput('3')" class="casio-btn">3</button>
-                <button type="button" onclick="casioInput('-')" class="casio-btn casio-op">-</button>
+                <button type="button" onclick="casioInput('+')" class="casio-btn casio-op">+</button>
                 <button type="button" onclick="casioInput('Math.PI')" class="casio-btn casio-op">π</button>
 
-                <button type="button" onclick="casioInput('0')" class="casio-btn col-span-2">0</button>
+                <button type="button" onclick="casioInput('0')" class="casio-btn">0</button>
                 <button type="button" onclick="casioInput('.')" class="casio-btn">.</button>
-                <button type="button" onclick="casioInput('+')" class="casio-btn casio-op">+</button>
+                <button type="button" onclick="casioInput('**')" class="casio-btn casio-op">^</button>
+                <button type="button" onclick="casioInput('ans')" class="casio-btn casio-op">Ans</button>
                 <button type="button" onclick="casioCalculate()" class="casio-btn casio-equal">=</button>
             </div>
+
+            <div class="grid grid-cols-4 gap-1">
+                <button type="button" onclick="casioFactorial()" class="casio-btn casio-op">x!</button>
+                <button type="button" onclick="casioInput('Math.PI*2*')" class="casio-btn casio-op">2πx</button>
+                <button type="button" onclick="casioInput('-')" class="casio-btn casio-op">(+/−)</button>
+                <button type="button" onclick="casioClear()" class="casio-btn casio-action">AC</button>
+            </div>
+            <p class="text-[9px] text-slate-400 text-center">Kéo thanh trên để di chuyển • Nhập phím • DEG/RAD</p>
         </div>
     </div>
 
@@ -569,6 +598,68 @@
                     Xem chi tiết từng câu & Bài giải
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL QUẢN LÝ TÀI KHOẢN -->
+    <div id="accountModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
+            <button type="button" onclick="closeAccountModal()" aria-label="Đóng cửa sổ"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="space-y-1">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">EduLearn • Hồ sơ cá nhân</span>
+                <h3 id="accountModalTitle" class="text-2xl font-extrabold text-slate-900">Quản lý tài khoản</h3>
+                <p class="text-sm text-slate-500">Cập nhật ảnh đại diện và thông tin hiển thị của bạn.</p>
+            </div>
+            <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div id="accountAvatarPreview" class="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold overflow-hidden shrink-0 shadow-md">U</div>
+                <div class="min-w-0 flex-1 space-y-2">
+                    <p class="font-bold text-slate-800">Ảnh đại diện</p>
+                    <p class="text-xs text-slate-500">Chọn ảnh JPG, PNG hoặc WebP (tối đa 5 MB).</p>
+                    <label for="accountAvatarFile" class="inline-flex cursor-pointer items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-camera"></i> Chọn ảnh
+                    </label>
+                    <input id="accountAvatarFile" type="file" accept="image/png,image/jpeg,image/webp" class="hidden" onchange="previewAccountAvatar(event)">
+                    <button type="button" onclick="removeAccountAvatar()" class="ml-2 text-xs font-semibold text-rose-600 hover:text-rose-700">Gỡ ảnh</button>
+                </div>
+            </div>
+            <form id="accountForm" class="space-y-4" onsubmit="saveAccountProfile(event)">
+                <div>
+                    <label for="accountNameInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Tên hiển thị</label>
+                    <input id="accountNameInput" type="text" maxlength="60" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label for="accountEmailInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Email tài khoản</label>
+                    <input id="accountEmailInput" type="email" readonly class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 outline-none cursor-not-allowed">
+                    <p class="text-[11px] text-slate-400 mt-1">Email hiện chỉ dùng để nhận diện tài khoản và không thể sửa tại đây.</p>
+                </div>
+                <div>
+                    <label for="accountRoleInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Vai trò</label>
+                    <input id="accountRoleInput" type="text" readonly class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 outline-none cursor-not-allowed">
+                </div>
+                <div>
+                    <label for="accountSchoolInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Trường học</label>
+                    <input id="accountSchoolInput" type="text" maxlength="120" placeholder="Nhập tên trường của bạn" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label for="accountClassInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Lớp</label>
+                    <input id="accountClassInput" type="text" maxlength="30" placeholder="Ví dụ: 12A1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+                <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+                    <button type="button" onclick="closeAccountModal()" class="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition text-sm">Hủy</button>
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-500/20 text-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+            <div class="border-t border-slate-100 pt-4">
+                <button type="button" onclick="accountModalLogout()" class="w-full py-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold text-sm transition">
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i>Đăng xuất tài khoản
+                </button>
+            </div>
+            <p class="text-[11px] leading-relaxed text-slate-400">Lưu ý: phiên bản hiện tại đang lưu hồ sơ trên trình duyệt này (localStorage), chưa dùng Firebase Authentication để xác thực hoặc đổi mật khẩu.</p>
         </div>
     </div>
 
@@ -805,7 +896,6 @@
                 }
             });
 
-            // Lắng nghe dữ liệu phòng chat CHUNG toàn server
             db.ref('globalChat').on('value', (snapshot) => {
                 const data = snapshot.val();
                 renderGlobalChatMessages(data);
@@ -827,6 +917,145 @@
                 return false;
             }
         }
+
+        // =========================================================
+        // QUẢN LÝ HỒ SƠ TÀI KHOẢN
+        // =========================================================
+        let pendingAccountAvatar = null;
+        let removePendingAccountAvatar = false;
+
+        function renderUserAvatar(element, user) {
+            if (!element) return;
+            if (user?.avatar) {
+                element.innerHTML = `<img src="${user.avatar}" alt="Ảnh đại diện" class="w-full h-full object-cover">`;
+            } else {
+                element.textContent = (user?.name || 'U').trim().charAt(0).toUpperCase();
+            }
+        }
+
+        function openAccountModal() {
+            const user = JSON.parse(localStorage.getItem('eduMathUser') || 'null');
+            if (!user) {
+                showToast('Vui lòng đăng nhập để quản lý tài khoản.');
+                openLoginModal();
+                return;
+            }
+            pendingAccountAvatar = user.avatar || null;
+            removePendingAccountAvatar = false;
+            const modal = document.getElementById('accountModal');
+            document.getElementById('accountNameInput').value = user.name || '';
+            document.getElementById('accountEmailInput').value = user.email || '';
+            document.getElementById('accountRoleInput').value =
+                (user.role === 'teacher' || user.role === 'giáo viên') ? 'Giáo viên' : 'Học sinh';
+            document.getElementById('accountSchoolInput').value = user.school || '';
+            document.getElementById('accountClassInput').value = user.className || user.class || '';
+            document.getElementById('accountAvatarFile').value = '';
+            renderUserAvatar(document.getElementById('accountAvatarPreview'), user);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAccountModal() {
+            const modal = document.getElementById('accountModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pendingAccountAvatar = null;
+            removePendingAccountAvatar = false;
+        }
+
+        function previewAccountAvatar(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                showToast('Vui lòng chọn ảnh JPG, PNG hoặc WebP.');
+                event.target.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Ảnh vượt quá 5 MB. Vui lòng chọn ảnh nhỏ hơn.');
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                const image = new Image();
+                image.onload = () => {
+                    const maxSide = 320;
+                    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(image.width * scale));
+                    canvas.height = Math.max(1, Math.round(image.height * scale));
+                    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                    pendingAccountAvatar = canvas.toDataURL('image/jpeg', 0.82);
+                    removePendingAccountAvatar = false;
+                    renderUserAvatar(document.getElementById('accountAvatarPreview'), {
+                        name: document.getElementById('accountNameInput').value,
+                        avatar: pendingAccountAvatar
+                    });
+                };
+                image.onerror = () => showToast('Không thể đọc ảnh này.');
+                image.src = reader.result;
+            };
+            reader.onerror = () => showToast('Không thể tải ảnh lên.');
+            reader.readAsDataURL(file);
+        }
+
+        function removeAccountAvatar() {
+            pendingAccountAvatar = null;
+            removePendingAccountAvatar = true;
+            document.getElementById('accountAvatarFile').value = '';
+            renderUserAvatar(document.getElementById('accountAvatarPreview'), {
+                name: document.getElementById('accountNameInput').value,
+                avatar: null
+            });
+        }
+
+        function saveAccountProfile(event) {
+            if (event) event.preventDefault();
+            const user = JSON.parse(localStorage.getItem('eduMathUser') || 'null');
+            if (!user) {
+                showToast('Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.');
+                closeAccountModal();
+                return;
+            }
+            const newName = document.getElementById('accountNameInput').value.trim();
+            if (!newName) {
+                showToast('Tên hiển thị không được để trống.');
+                return;
+            }
+            user.name = newName;
+            user.school = document.getElementById('accountSchoolInput').value.trim();
+            user.className = document.getElementById('accountClassInput').value.trim();
+            if (removePendingAccountAvatar) user.avatar = '';
+            else if (pendingAccountAvatar) user.avatar = pendingAccountAvatar;
+
+            localStorage.setItem('eduMathUser', JSON.stringify(user));
+            localStorage.setItem('currentUser', JSON.stringify(user));
+
+            const users = JSON.parse(localStorage.getItem('eduMathUsersList') || '[]');
+            const index = users.findIndex(item => item.email === user.email);
+            if (index >= 0) {
+                users[index] = { ...users[index], ...user };
+                localStorage.setItem('eduMathUsersList', JSON.stringify(users));
+            }
+
+            closeAccountModal();
+            checkUserState();
+            showToast('Đã cập nhật hồ sơ tài khoản!');
+        }
+
+        function accountModalLogout() {
+            closeAccountModal();
+            handleLogout();
+        }
+
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('accountModal');
+            if (event.target === modal) closeAccountModal();
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') closeAccountModal();
+        });
 
         function openLoginModal() { document.getElementById('loginModal')?.classList.remove('hidden'); }
         function closeLoginModal() { document.getElementById('loginModal')?.classList.add('hidden'); }
@@ -1039,6 +1268,8 @@
         // =========================================================
         let casioExpr = '';
         let isCasioMinimized = false;
+        let casioAngleMode = 'DEG';
+        let casioAns = 0;
 
         function toggleCasioWidget(show) {
             const widget = document.getElementById('casioWidget');
@@ -1057,77 +1288,120 @@
             if (!body || !widget) return;
             isCasioMinimized = typeof forceMin === 'boolean' ? forceMin : !isCasioMinimized;
             body.classList.toggle('hidden', isCasioMinimized);
-            if (isCasioMinimized) {
-                widget.classList.remove('w-[285px]', 'sm:w-[300px]');
-                widget.classList.add('w-56');
-                if (icon) icon.className = 'fa-solid fa-up-right-and-down-left-from-center';
-            } else {
-                widget.classList.remove('w-56');
-                widget.classList.add('w-[285px]', 'sm:w-[300px]');
-                if (icon) icon.className = 'fa-solid fa-minus';
-            }
+            if (icon) icon.className = isCasioMinimized
+                ? 'fa-solid fa-up-right-and-down-left-from-center'
+                : 'fa-solid fa-minus';
         }
 
-        function formatCasioDisplay(rawExpr) {
-            if (!rawExpr) return '0';
-            return rawExpr
-                .replace(/Math\.sin\(/g, 'sin(').replace(/Math\.cos\(/g, 'cos(').replace(/Math\.tan\(/g, 'tan(')
-                .replace(/Math\.sqrt\(/g, '√(').replace(/Math\.log10\(/g, 'log(').replace(/Math\.log\(/g, 'ln(')
-                .replace(/Math\.PI/g, 'π').replace(/\*\*2/g, '²').replace(/\*\*/g, '^').replace(/\*/g, '×').replace(/\//g, '÷');
+        function formatCasioDisplay(expr) {
+            if (!expr) return '0';
+            return expr.replace(/Math\.sin\(/g, 'sin(').replace(/Math\.cos\(/g, 'cos(')
+                .replace(/Math\.tan\(/g, 'tan(').replace(/Math\.asin\(/g, 'sin⁻¹(')
+                .replace(/Math\.acos\(/g, 'cos⁻¹(').replace(/Math\.atan\(/g, 'tan⁻¹(')
+                .replace(/Math\.sqrt\(/g, '√(').replace(/Math\.log10\(/g, 'log(')
+                .replace(/Math\.log\(/g, 'ln(').replace(/Math\.abs\(/g, 'abs(')
+                .replace(/Math\.PI/g, 'π').replace(/Math\.E/g, 'e')
+                .replace(/\*\*/g, '^').replace(/\*/g, '×').replace(/\//g, '÷');
         }
 
-        function casioInput(val) {
+        function casioRender() {
             const exprElem = document.getElementById('casioExpression');
-            if (casioExpr === '0' && !['+', '-', '*', '/', '**2', '**'].includes(val)) {
-                casioExpr = val;
-            } else {
-                casioExpr += val;
-            }
+            const modeElem = document.getElementById('casioModeLabel');
+            const angleBtn = document.getElementById('casioAngleBtn');
+            const memoryElem = document.getElementById('casioMemoryLabel');
             if (exprElem) exprElem.innerText = formatCasioDisplay(casioExpr);
+            if (modeElem) modeElem.innerText = casioAngleMode;
+            if (angleBtn) angleBtn.innerText = casioAngleMode;
+            if (memoryElem) memoryElem.innerText = 'Ans = ' + Number(casioAns.toPrecision(8));
+        }
+
+        function casioInput(value) {
+            if (casioExpr === '0' && !['+', '-', '*', '/', '**', '**2', '**3'].includes(value)) casioExpr = value;
+            else casioExpr += value;
+            casioRender();
+        }
+
+        function casioToggleAngle() {
+            casioAngleMode = casioAngleMode === 'DEG' ? 'RAD' : 'DEG';
+            casioRender();
         }
 
         function casioClear() {
             casioExpr = '';
-            const exprElem = document.getElementById('casioExpression');
-            const resElem = document.getElementById('casioResult');
-            if (exprElem) exprElem.innerText = '0';
-            if (resElem) resElem.innerText = '0';
+            const result = document.getElementById('casioResult');
+            if (result) result.innerText = '0';
+            casioRender();
         }
 
         function casioBackspace() {
-            const tokens = ['Math.log10(', 'Math.sqrt(', 'Math.sin(', 'Math.cos(', 'Math.tan(', 'Math.log(', 'Math.PI', '**2', '**'];
-            let matched = false;
-            for (const token of tokens) {
-                if (casioExpr.endsWith(token)) {
-                    casioExpr = casioExpr.slice(0, -token.length);
-                    matched = true;
-                    break;
-                }
+            const tokens = ['Math.log10(', 'Math.sqrt(', 'Math.sin(', 'Math.cos(', 'Math.tan(', 'Math.asin(', 'Math.acos(', 'Math.atan(', 'Math.abs(', 'Math.floor(', 'Math.ceil(', 'Math.round(', 'Math.exp(', 'Math.log(', 'Math.PI', 'Math.E', '**3', '**2', '**'];
+            const token = tokens.find(item => casioExpr.endsWith(item));
+            casioExpr = token ? casioExpr.slice(0, -token.length) : casioExpr.slice(0, -1);
+            casioRender();
+        }
+
+        function casioFactorial() {
+            const result = document.getElementById('casioResult');
+            try {
+                const value = casioEvaluate(casioExpr || '0');
+                if (!Number.isInteger(value) || value < 0 || value > 170) throw new Error('Math');
+                let factorial = 1;
+                for (let i = 2; i <= value; i++) factorial *= i;
+                casioExpr = String(factorial);
+                if (result) result.innerText = String(factorial);
+                casioRender();
+            } catch (e) {
+                if (result) result.innerText = 'Math ERROR';
             }
-            if (!matched) casioExpr = casioExpr.slice(0, -1);
-            const exprElem = document.getElementById('casioExpression');
-            if (exprElem) exprElem.innerText = formatCasioDisplay(casioExpr);
+        }
+
+        function casioEvaluate(expression) {
+            let expr = expression.replace(/\bans\b/gi, '(' + casioAns + ')');
+            if (!/^[0-9+\-*/().,\sA-Za-z_]*$/.test(expr)) throw new Error('Syntax');
+            const allowed = ['Math.sin','Math.cos','Math.tan','Math.asin','Math.acos','Math.atan','Math.sqrt','Math.abs','Math.log10','Math.log','Math.floor','Math.ceil','Math.round','Math.exp','Math.PI','Math.E'];
+            const identifiers = expr.match(/[A-Za-z_][A-Za-z0-9_.]*/g) || [];
+            if (identifiers.some(id => !allowed.includes(id))) throw new Error('Syntax');
+            if (casioAngleMode === 'DEG') {
+                expr = expr.replace(/Math\.sin\(/g, 'Math.sin((Math.PI/180)*')
+                    .replace(/Math\.cos\(/g, 'Math.cos((Math.PI/180)*')
+                    .replace(/Math\.tan\(/g, 'Math.tan((Math.PI/180)*')
+                    .replace(/Math\.asin\(/g, '(180/Math.PI*Math.asin(')
+                    .replace(/Math\.acos\(/g, '(180/Math.PI*Math.acos(')
+                    .replace(/Math\.atan\(/g, '(180/Math.PI*Math.atan(');
+                expr = expr.replace(/(Math\.sin|Math\.cos|Math\.tan)\(\((Math\.PI\/180)\)\*([^()]*)\)/g, '$1(($2)*$3)');
+            }
+            const result = Function('"use strict";return (' + expr + ')')();
+            if (typeof result !== 'number' || !Number.isFinite(result)) throw new Error('Math');
+            return result;
         }
 
         function casioCalculate() {
-            const resElem = document.getElementById('casioResult');
+            const resultElem = document.getElementById('casioResult');
             if (!casioExpr) return;
             try {
-                const openCount = (casioExpr.match(/\(/g) || []).length;
-                const closeCount = (casioExpr.match(/\)/g) || []).length;
-                let exprToEval = casioExpr + ')'.repeat(Math.max(0, openCount - closeCount));
-                let result = Function('"use strict";return (' + exprToEval + ')')();
-                if (result === undefined || isNaN(result) || !isFinite(result)) {
-                    if (resElem) resElem.innerText = 'Math ERROR';
-                } else {
-                    const formatted = Number(result.toFixed(8));
-                    if (resElem) resElem.innerText = formatted;
-                    casioExpr = String(formatted);
-                }
-            } catch (err) {
-                if (resElem) resElem.innerText = 'Syntax ERROR';
+                let expression = casioExpr;
+                const opens = (expression.match(/\(/g) || []).length;
+                const closes = (expression.match(/\)/g) || []).length;
+                expression += ')'.repeat(Math.max(0, opens - closes));
+                const value = casioEvaluate(expression);
+                casioAns = value;
+                const rounded = Number(value.toPrecision(12));
+                if (resultElem) resultElem.innerText = String(rounded);
+                casioExpr = String(rounded);
+                casioRender();
+            } catch (error) {
+                if (resultElem) resultElem.innerText = error.message === 'Syntax' ? 'Syntax ERROR' : 'Math ERROR';
             }
         }
+
+        document.addEventListener('keydown', function(event) {
+            const widget = document.getElementById('casioWidget');
+            if (!widget || widget.classList.contains('hidden') || isCasioMinimized) return;
+            if (/^[0-9.+*/()-]$/.test(event.key)) { casioInput(event.key); event.preventDefault(); }
+            else if (event.key === 'Enter' || event.key === '=') { casioCalculate(); event.preventDefault(); }
+            else if (event.key === 'Backspace') { casioBackspace(); event.preventDefault(); }
+            else if (event.key === 'Escape') casioClear();
+        });
 
         function initCasioDraggable() {
             const widget = document.getElementById('casioWidget');
@@ -1137,6 +1411,7 @@
 
             const onStart = (clientX, clientY) => {
                 isDragging = true;
+                document.body.style.userSelect = 'none';
                 const rect = widget.getBoundingClientRect();
                 widget.style.left = rect.left + 'px';
                 widget.style.top = rect.top + 'px';
@@ -1149,20 +1424,24 @@
             const onMove = (clientX, clientY) => {
                 if (!isDragging) return;
                 const dx = clientX - startX, dy = clientY - startY;
-                const maxLeft = window.innerWidth - widget.offsetWidth;
-                const maxTop = window.innerHeight - widget.offsetHeight;
+                const maxLeft = Math.max(0, window.innerWidth - widget.offsetWidth);
+                const maxTop = Math.max(0, window.innerHeight - widget.offsetHeight);
                 widget.style.left = Math.max(0, Math.min(maxLeft, initialLeft + dx)) + 'px';
                 widget.style.top = Math.max(0, Math.min(maxTop, initialTop + dy)) + 'px';
             };
 
-            const onEnd = () => { isDragging = false; };
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                document.body.style.userSelect = '';
+            };
 
             header.addEventListener('mousedown', (e) => { if (!e.target.closest('button')) onStart(e.clientX, e.clientY); });
-            document.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
-            document.addEventListener('mouseup', onEnd);
+            window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', onEnd);
             header.addEventListener('touchstart', (e) => { if (!e.target.closest('button')) onStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-            document.addEventListener('touchmove', (e) => { if (isDragging) onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-            document.addEventListener('touchend', onEnd);
+            window.addEventListener('touchmove', (e) => { if (isDragging) onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+            window.addEventListener('touchend', onEnd);
         }
 
         function handleRegister(event) {
@@ -1425,7 +1704,7 @@
                 const nameDisp = document.getElementById('userNameDisplay');
                 const avatar = document.getElementById('userAvatar');
                 if (nameDisp) nameDisp.innerText = savedUser.name + (isTeacher ? ' (GV)' : '');
-                if (avatar) avatar.innerText = savedUser.name.charAt(0).toUpperCase();
+                if (avatar) renderUserAvatar(avatar, savedUser);
                 if (welcomeText) welcomeText.innerHTML = `<strong>Chào ${savedUser.name}!</strong> ${isTeacher ? 'Đang ở quyền Giáo viên.' : 'Tiến độ của bạn đang được ghi nhận.'}`;
             } else {
                 authButtons?.classList.remove('hidden');
